@@ -41,9 +41,10 @@ dotnet test
 
 Run the login command to authenticate with Oura. This opens your browser to the Oura consent screen and saves tokens locally:
 
-```bash
-OURA_CLIENT_ID=<your-client-id> OURA_CLIENT_SECRET=<your-client-secret> \
-  dotnet run --project src/OuraMcp -- login
+```powershell
+$env:OURA_CLIENT_ID = "<your-client-id>"
+$env:OURA_CLIENT_SECRET = "<your-client-secret>"
+dotnet run --project src/OuraMcp -- login
 ```
 
 Tokens are saved to `~/.oura-mcp/tokens.json`. You only need to do this once — the server refreshes tokens automatically on subsequent runs.
@@ -135,13 +136,22 @@ OAuth credentials (`OURA_CLIENT_ID`, `OURA_CLIENT_SECRET`) are read from environ
 
 ## Development
 
-```bash
+```powershell
 # First-time setup: authenticate with Oura
-OURA_CLIENT_ID=<id> OURA_CLIENT_SECRET=<secret> dotnet run --project src/OuraMcp -- login
+$env:OURA_CLIENT_ID = "<your-client-id>"
+$env:OURA_CLIENT_SECRET = "<your-client-secret>"
+dotnet run --project src/OuraMcp -- login
 
-# Build and test
+# Build
 dotnet build
+
+# Run tests
 dotnet test
+
+# Run the MCP server locally (STDIO)
+$env:OURA_CLIENT_ID = "<your-client-id>"
+$env:OURA_CLIENT_SECRET = "<your-client-secret>"
+dotnet run --project src/OuraMcp
 ```
 
 ## Technology Stack
