@@ -106,7 +106,7 @@ public class ModelDeserializationTests
         result.Should().NotBeNull();
         result!.Bpm.Should().Be(72);
         result.Source.Should().Be("awake");
-        result.Timestamp.Should().Be("2024-01-01T12:00:00+00:00");
+        result.Timestamp.Should().Be(DateTimeOffset.Parse("2024-01-01T12:00:00+00:00"));
     }
 
     [Fact]

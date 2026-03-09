@@ -1,4 +1,5 @@
 using OuraMcp.Auth;
+using OuraMcp.OuraClient;
 using ModelContextProtocol.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -17,9 +18,9 @@ builder.Services.Configure<OuraOAuthOptions>(opts =>
 builder.Services.AddHttpClient("OuraApi", c => c.BaseAddress = new Uri("https://api.ouraring.com"));
 builder.Services.AddHttpClient("OuraAuth", c => c.BaseAddress = new Uri("https://api.ouraring.com"));
 
-// Services (interfaces will be implemented later)
-// builder.Services.AddSingleton<IOuraTokenService, OuraTokenService>();
-// builder.Services.AddScoped<IOuraApiClient, OuraApiClient>();
+// Services
+builder.Services.AddSingleton<IOuraTokenService, OuraTokenService>();
+builder.Services.AddScoped<IOuraApiClient, OuraApiClient>();
 
 // MCP Server
 builder.Services.AddMcpServer()
@@ -28,6 +29,7 @@ builder.Services.AddMcpServer()
 
 var app = builder.Build();
 
+app.MapOAuthEndpoints();
 app.MapMcp("/mcp");
 
 app.Run();
