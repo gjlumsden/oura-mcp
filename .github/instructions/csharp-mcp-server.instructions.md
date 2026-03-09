@@ -5,7 +5,7 @@ applyTo: '**/*.cs, **/*.csproj'
 
 # C# MCP Server Development
 
-<!-- Source: https://github.com/github/awesome-copilot/blob/c41cc5cb38369a4436e9f860a0b32857dc5355c4/instructions/csharp-mcp-server.instructions.md -->
+<!-- Source: https://github.com/github/awesome-copilot/blob/main/instructions/csharp-mcp-server.instructions.md -->
 
 ## Instructions
 
