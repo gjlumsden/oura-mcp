@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -21,6 +22,11 @@ builder.Services.Configure<OuraOAuthOptions>(opts =>
         ?? throw new InvalidOperationException("OURA_CLIENT_SECRET is required");
     opts.RedirectUri = builder.Configuration["OURA_REDIRECT_URI"] ?? "http://localhost:5000/callback";
 });
+
+// DataProtection: encrypts tokens at rest using DPAPI (Windows) or key files (Linux/macOS)
+builder.Services.AddDataProtection()
+    .SetApplicationName("OuraMcp")
+    .SetDefaultKeyLifetime(TimeSpan.FromDays(365));
 
 // HTTP Clients
 builder.Services.AddHttpClient("OuraApi", c => c.BaseAddress = new Uri("https://api.ouraring.com"));

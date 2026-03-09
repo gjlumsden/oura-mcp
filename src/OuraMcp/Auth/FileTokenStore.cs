@@ -1,21 +1,30 @@
 using System.Runtime.InteropServices;
+using System.Security.Cryptography;
 using System.Text.Json;
+using Microsoft.AspNetCore.DataProtection;
+using Microsoft.Extensions.Logging;
 
 namespace OuraMcp.Auth;
 
 /// <summary>
-/// Persists Oura OAuth tokens to <c>~/.oura-mcp/tokens.json</c>.
-/// Thread-safe via <see cref="SemaphoreSlim"/>. On Unix, the file is
-/// restricted to owner-only (600) permissions.
+/// Persists Oura OAuth tokens to <c>~/.oura-mcp/tokens.json</c> with
+/// encryption-at-rest via <see cref="IDataProtector"/>. Thread-safe via
+/// <see cref="SemaphoreSlim"/>. On Unix, the file is restricted to
+/// owner-only (600) permissions.
 /// </summary>
 public sealed class FileTokenStore : IOuraTokenStore
 {
+    /// <summary>Data-protection purpose string used to create the protector.</summary>
+    internal const string ProtectorPurpose = "OuraMcp.TokenStore";
+
     private static readonly string DefaultTokenDirectory = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
         ".oura-mcp");
 
     private readonly string _tokenDirectory;
     private readonly string _tokenFilePath;
+    private readonly IDataProtector _protector;
+    private readonly ILogger<FileTokenStore> _logger;
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -29,15 +38,22 @@ public sealed class FileTokenStore : IOuraTokenStore
     /// Creates a new <see cref="FileTokenStore"/> using the default token directory
     /// (<c>~/.oura-mcp/</c>).
     /// </summary>
-    public FileTokenStore() : this(DefaultTokenDirectory) { }
+    /// <param name="dataProtectionProvider">Provides encryption/decryption for token data.</param>
+    /// <param name="logger">Logger for diagnostics.</param>
+    public FileTokenStore(IDataProtectionProvider dataProtectionProvider, ILogger<FileTokenStore> logger)
+        : this(dataProtectionProvider, logger, DefaultTokenDirectory) { }
 
     /// <summary>
     /// Creates a new <see cref="FileTokenStore"/> using the specified directory.
     /// Useful for testing with isolated temp directories.
     /// </summary>
+    /// <param name="dataProtectionProvider">Provides encryption/decryption for token data.</param>
+    /// <param name="logger">Logger for diagnostics.</param>
     /// <param name="tokenDirectory">The directory where <c>tokens.json</c> is stored.</param>
-    public FileTokenStore(string tokenDirectory)
+    public FileTokenStore(IDataProtectionProvider dataProtectionProvider, ILogger<FileTokenStore> logger, string tokenDirectory)
     {
+        _protector = dataProtectionProvider.CreateProtector(ProtectorPurpose);
+        _logger = logger;
         _tokenDirectory = tokenDirectory;
         _tokenFilePath = Path.Combine(_tokenDirectory, "tokens.json");
     }
@@ -53,9 +69,16 @@ public sealed class FileTokenStore : IOuraTokenStore
                 return null;
             }
 
-            var json = await File.ReadAllTextAsync(_tokenFilePath, ct);
+            var encrypted = await File.ReadAllTextAsync(_tokenFilePath, ct);
+            var json = _protector.Unprotect(encrypted);
 
             return JsonSerializer.Deserialize<StoredTokenData>(json, JsonOptions);
+        }
+        catch (CryptographicException ex)
+        {
+            _logger.LogWarning(ex, "Token file is corrupted or was encrypted with a different key. Please re-login");
+
+            return null;
         }
         finally
         {
@@ -72,7 +95,8 @@ public sealed class FileTokenStore : IOuraTokenStore
             Directory.CreateDirectory(_tokenDirectory);
 
             var json = JsonSerializer.Serialize(tokens, JsonOptions);
-            await File.WriteAllTextAsync(_tokenFilePath, json, ct);
+            var encrypted = _protector.Protect(json);
+            await File.WriteAllTextAsync(_tokenFilePath, encrypted, ct);
 
             SetOwnerOnlyPermissions();
         }
@@ -101,7 +125,7 @@ public sealed class FileTokenStore : IOuraTokenStore
 
     /// <summary>
     /// On Unix, restrict the token file to owner-read/write only (chmod 600).
-    /// On Windows, we rely on user-profile folder ACLs (DPAPI integration is a future improvement).
+    /// On Windows, we rely on user-profile folder ACLs plus DPAPI-backed DataProtection.
     /// </summary>
     private void SetOwnerOnlyPermissions()
     {
