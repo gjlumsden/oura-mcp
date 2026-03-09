@@ -2,20 +2,22 @@ using System.Text.Json.Serialization;
 
 namespace OuraMcp.OuraClient.Models;
 
-public record DailySleep(
-    [property: JsonPropertyName("id")] string? Id,
-    [property: JsonPropertyName("contributors")] SleepContributors? Contributors,
-    [property: JsonPropertyName("day")] DateOnly? Day,
-    [property: JsonPropertyName("score")] int? Score,
-    [property: JsonPropertyName("timestamp")] DateTimeOffset? Timestamp
-);
+public record DailySleep
+{
+    [JsonPropertyName("id")] public string? Id { get; init; }
+    [JsonPropertyName("contributors")] public SleepContributors? Contributors { get; init; }
+    [JsonPropertyName("day")] public DateOnly? Day { get; init; }
+    [JsonPropertyName("score")] public int? Score { get; init; }
+    [JsonPropertyName("timestamp")] public DateTimeOffset? Timestamp { get; init; }
+}
 
-public record SleepContributors(
-    [property: JsonPropertyName("deep_sleep")] int? DeepSleep,
-    [property: JsonPropertyName("efficiency")] int? Efficiency,
-    [property: JsonPropertyName("latency")] int? Latency,
-    [property: JsonPropertyName("rem_sleep")] int? RemSleep,
-    [property: JsonPropertyName("restfulness")] int? Restfulness,
-    [property: JsonPropertyName("timing")] int? Timing,
-    [property: JsonPropertyName("total_sleep")] int? TotalSleep
-);
+public record SleepContributors
+{
+    [JsonPropertyName("deep_sleep")] public int? DeepSleep { get; init; }
+    [JsonPropertyName("efficiency")] public int? Efficiency { get; init; }
+    [JsonPropertyName("latency")] public int? Latency { get; init; }
+    [JsonPropertyName("rem_sleep")] public int? RemSleep { get; init; }
+    [JsonPropertyName("restfulness")] public int? Restfulness { get; init; }
+    [JsonPropertyName("timing")] public int? Timing { get; init; }
+    [JsonPropertyName("total_sleep")] public int? TotalSleep { get; init; }
+}

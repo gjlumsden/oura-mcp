@@ -2,16 +2,18 @@ using System.Text.Json.Serialization;
 
 namespace OuraMcp.OuraClient.Models;
 
-public record SleepTime(
-    [property: JsonPropertyName("id")] string? Id,
-    [property: JsonPropertyName("day")] DateOnly? Day,
-    [property: JsonPropertyName("optimal_bedtime")] SleepTimeWindow? OptimalBedtime,
-    [property: JsonPropertyName("recommendation")] string? Recommendation,
-    [property: JsonPropertyName("status")] string? Status
-);
+public record SleepTime
+{
+    [JsonPropertyName("id")] public string? Id { get; init; }
+    [JsonPropertyName("day")] public DateOnly? Day { get; init; }
+    [JsonPropertyName("optimal_bedtime")] public SleepTimeWindow? OptimalBedtime { get; init; }
+    [JsonPropertyName("recommendation")] public string? Recommendation { get; init; }
+    [JsonPropertyName("status")] public string? Status { get; init; }
+}
 
-public record SleepTimeWindow(
-    [property: JsonPropertyName("day_tz")] int? DayTz,
-    [property: JsonPropertyName("end_offset")] int? EndOffset,
-    [property: JsonPropertyName("start_offset")] int? StartOffset
-);
+public record SleepTimeWindow
+{
+    [JsonPropertyName("day_tz")] public int? DayTz { get; init; }
+    [JsonPropertyName("end_offset")] public int? EndOffset { get; init; }
+    [JsonPropertyName("start_offset")] public int? StartOffset { get; init; }
+}

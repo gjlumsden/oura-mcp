@@ -2,41 +2,43 @@ using System.Text.Json.Serialization;
 
 namespace OuraMcp.OuraClient.Models;
 
-public record SleepPeriod(
-    [property: JsonPropertyName("id")] string? Id,
-    [property: JsonPropertyName("average_breath")] double? AverageBreath,
-    [property: JsonPropertyName("average_heart_rate")] double? AverageHeartRate,
-    [property: JsonPropertyName("average_hrv")] int? AverageHrv,
-    [property: JsonPropertyName("awake_time")] int? AwakeTime,
-    [property: JsonPropertyName("bedtime_end")] DateTimeOffset? BedtimeEnd,
-    [property: JsonPropertyName("bedtime_start")] DateTimeOffset? BedtimeStart,
-    [property: JsonPropertyName("day")] DateOnly? Day,
-    [property: JsonPropertyName("deep_sleep_duration")] int? DeepSleepDuration,
-    [property: JsonPropertyName("efficiency")] int? Efficiency,
-    [property: JsonPropertyName("heart_rate")] SampleModel? HeartRate,
-    [property: JsonPropertyName("hrv")] SampleModel? Hrv,
-    [property: JsonPropertyName("latency")] int? Latency,
-    [property: JsonPropertyName("light_sleep_duration")] int? LightSleepDuration,
-    [property: JsonPropertyName("low_battery_alert")] bool? LowBatteryAlert,
-    [property: JsonPropertyName("lowest_heart_rate")] int? LowestHeartRate,
-    [property: JsonPropertyName("movement_30_sec")] string? Movement30Sec,
-    [property: JsonPropertyName("period")] int? Period,
-    [property: JsonPropertyName("readiness")] ReadinessSummary? Readiness,
-    [property: JsonPropertyName("readiness_score_delta")] int? ReadinessScoreDelta,
-    [property: JsonPropertyName("rem_sleep_duration")] int? RemSleepDuration,
-    [property: JsonPropertyName("restless_periods")] int? RestlessPeriods,
-    [property: JsonPropertyName("sleep_phase_5_min")] string? SleepPhase5Min,
-    [property: JsonPropertyName("sleep_score_delta")] int? SleepScoreDelta,
-    [property: JsonPropertyName("sleep_algorithm_version")] string? SleepAlgorithmVersion,
-    [property: JsonPropertyName("sleep_analysis_reason")] string? SleepAnalysisReason,
-    [property: JsonPropertyName("time_in_bed")] int? TimeInBed,
-    [property: JsonPropertyName("total_sleep_duration")] int? TotalSleepDuration,
-    [property: JsonPropertyName("type")] string? Type
-);
+public record SleepPeriod
+{
+    [JsonPropertyName("id")] public string? Id { get; init; }
+    [JsonPropertyName("average_breath")] public double? AverageBreath { get; init; }
+    [JsonPropertyName("average_heart_rate")] public double? AverageHeartRate { get; init; }
+    [JsonPropertyName("average_hrv")] public int? AverageHrv { get; init; }
+    [JsonPropertyName("awake_time")] public int? AwakeTime { get; init; }
+    [JsonPropertyName("bedtime_end")] public DateTimeOffset? BedtimeEnd { get; init; }
+    [JsonPropertyName("bedtime_start")] public DateTimeOffset? BedtimeStart { get; init; }
+    [JsonPropertyName("day")] public DateOnly? Day { get; init; }
+    [JsonPropertyName("deep_sleep_duration")] public int? DeepSleepDuration { get; init; }
+    [JsonPropertyName("efficiency")] public int? Efficiency { get; init; }
+    [JsonPropertyName("heart_rate")] public SampleModel? HeartRate { get; init; }
+    [JsonPropertyName("hrv")] public SampleModel? Hrv { get; init; }
+    [JsonPropertyName("latency")] public int? Latency { get; init; }
+    [JsonPropertyName("light_sleep_duration")] public int? LightSleepDuration { get; init; }
+    [JsonPropertyName("low_battery_alert")] public bool? LowBatteryAlert { get; init; }
+    [JsonPropertyName("lowest_heart_rate")] public int? LowestHeartRate { get; init; }
+    [JsonPropertyName("movement_30_sec")] public string? Movement30Sec { get; init; }
+    [JsonPropertyName("period")] public int? Period { get; init; }
+    [JsonPropertyName("readiness")] public ReadinessSummary? Readiness { get; init; }
+    [JsonPropertyName("readiness_score_delta")] public int? ReadinessScoreDelta { get; init; }
+    [JsonPropertyName("rem_sleep_duration")] public int? RemSleepDuration { get; init; }
+    [JsonPropertyName("restless_periods")] public int? RestlessPeriods { get; init; }
+    [JsonPropertyName("sleep_phase_5_min")] public string? SleepPhase5Min { get; init; }
+    [JsonPropertyName("sleep_score_delta")] public int? SleepScoreDelta { get; init; }
+    [JsonPropertyName("sleep_algorithm_version")] public string? SleepAlgorithmVersion { get; init; }
+    [JsonPropertyName("sleep_analysis_reason")] public string? SleepAnalysisReason { get; init; }
+    [JsonPropertyName("time_in_bed")] public int? TimeInBed { get; init; }
+    [JsonPropertyName("total_sleep_duration")] public int? TotalSleepDuration { get; init; }
+    [JsonPropertyName("type")] public string? Type { get; init; }
+}
 
-public record ReadinessSummary(
-    [property: JsonPropertyName("contributors")] ReadinessContributors? Contributors,
-    [property: JsonPropertyName("score")] int? Score,
-    [property: JsonPropertyName("temperature_deviation")] double? TemperatureDeviation,
-    [property: JsonPropertyName("temperature_trend_deviation")] double? TemperatureTrendDeviation
-);
+public record ReadinessSummary
+{
+    [JsonPropertyName("contributors")] public ReadinessContributors? Contributors { get; init; }
+    [JsonPropertyName("score")] public int? Score { get; init; }
+    [JsonPropertyName("temperature_deviation")] public double? TemperatureDeviation { get; init; }
+    [JsonPropertyName("temperature_trend_deviation")] public double? TemperatureTrendDeviation { get; init; }
+}

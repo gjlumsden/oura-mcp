@@ -2,15 +2,16 @@ using System.Text.Json.Serialization;
 
 namespace OuraMcp.OuraClient.Models;
 
-public record Workout(
-    [property: JsonPropertyName("id")] string? Id,
-    [property: JsonPropertyName("activity")] string? Activity,
-    [property: JsonPropertyName("calories")] double? Calories,
-    [property: JsonPropertyName("day")] DateOnly? Day,
-    [property: JsonPropertyName("distance")] double? Distance,
-    [property: JsonPropertyName("end_datetime")] DateTimeOffset? EndDatetime,
-    [property: JsonPropertyName("intensity")] string? Intensity,
-    [property: JsonPropertyName("label")] string? Label,
-    [property: JsonPropertyName("source")] string? Source,
-    [property: JsonPropertyName("start_datetime")] DateTimeOffset? StartDatetime
-);
+public record Workout
+{
+    [JsonPropertyName("id")] public string? Id { get; init; }
+    [JsonPropertyName("activity")] public string? Activity { get; init; }
+    [JsonPropertyName("calories")] public double? Calories { get; init; }
+    [JsonPropertyName("day")] public DateOnly? Day { get; init; }
+    [JsonPropertyName("distance")] public double? Distance { get; init; }
+    [JsonPropertyName("end_datetime")] public DateTimeOffset? EndDatetime { get; init; }
+    [JsonPropertyName("intensity")] public string? Intensity { get; init; }
+    [JsonPropertyName("label")] public string? Label { get; init; }
+    [JsonPropertyName("source")] public string? Source { get; init; }
+    [JsonPropertyName("start_datetime")] public DateTimeOffset? StartDatetime { get; init; }
+}

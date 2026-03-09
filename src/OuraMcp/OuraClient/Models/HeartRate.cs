@@ -2,8 +2,9 @@ using System.Text.Json.Serialization;
 
 namespace OuraMcp.OuraClient.Models;
 
-public record HeartRate(
-    [property: JsonPropertyName("bpm")] int? Bpm,
-    [property: JsonPropertyName("source")] string? Source,
-    [property: JsonPropertyName("timestamp")] DateTimeOffset? Timestamp
-);
+public record HeartRate
+{
+    [JsonPropertyName("bpm")] public int? Bpm { get; init; }
+    [JsonPropertyName("source")] public string? Source { get; init; }
+    [JsonPropertyName("timestamp")] public DateTimeOffset? Timestamp { get; init; }
+}

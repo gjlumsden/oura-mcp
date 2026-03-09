@@ -21,7 +21,7 @@ public class BodyToolsTests
     {
         var expected = new List<HeartRate>
         {
-            new() { Bpm = 72, Source = "awake", Timestamp = DateTime.UtcNow.ToString("o") }
+            new() { Bpm = 72, Source = "awake", Timestamp = DateTimeOffset.UtcNow }
         };
         _mockClient
             .Setup(c => c.GetHeartRateAsync(It.IsAny<DateOnly?>(), It.IsAny<DateOnly?>(), It.IsAny<CancellationToken>()))

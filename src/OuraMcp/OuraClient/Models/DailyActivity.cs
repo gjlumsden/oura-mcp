@@ -2,40 +2,42 @@ using System.Text.Json.Serialization;
 
 namespace OuraMcp.OuraClient.Models;
 
-public record DailyActivity(
-    [property: JsonPropertyName("id")] string? Id,
-    [property: JsonPropertyName("class_5_min")] string? Class5Min,
-    [property: JsonPropertyName("score")] int? Score,
-    [property: JsonPropertyName("active_calories")] int? ActiveCalories,
-    [property: JsonPropertyName("average_met_minutes")] double? AverageMetMinutes,
-    [property: JsonPropertyName("contributors")] ActivityContributors? Contributors,
-    [property: JsonPropertyName("equivalent_walking_distance")] int? EquivalentWalkingDistance,
-    [property: JsonPropertyName("high_activity_met_minutes")] int? HighActivityMetMinutes,
-    [property: JsonPropertyName("high_activity_time")] int? HighActivityTime,
-    [property: JsonPropertyName("inactivity_alerts")] int? InactivityAlerts,
-    [property: JsonPropertyName("low_activity_met_minutes")] int? LowActivityMetMinutes,
-    [property: JsonPropertyName("low_activity_time")] int? LowActivityTime,
-    [property: JsonPropertyName("medium_activity_met_minutes")] int? MediumActivityMetMinutes,
-    [property: JsonPropertyName("medium_activity_time")] int? MediumActivityTime,
-    [property: JsonPropertyName("met")] SampleModel? Met,
-    [property: JsonPropertyName("meters_to_target")] int? MetersToTarget,
-    [property: JsonPropertyName("non_wear_time")] int? NonWearTime,
-    [property: JsonPropertyName("resting_time")] int? RestingTime,
-    [property: JsonPropertyName("sedentary_met_minutes")] int? SedentaryMetMinutes,
-    [property: JsonPropertyName("sedentary_time")] int? SedentaryTime,
-    [property: JsonPropertyName("steps")] int? Steps,
-    [property: JsonPropertyName("target_calories")] int? TargetCalories,
-    [property: JsonPropertyName("target_meters")] int? TargetMeters,
-    [property: JsonPropertyName("total_calories")] int? TotalCalories,
-    [property: JsonPropertyName("day")] DateOnly? Day,
-    [property: JsonPropertyName("timestamp")] DateTimeOffset? Timestamp
-);
+public record DailyActivity
+{
+    [JsonPropertyName("id")] public string? Id { get; init; }
+    [JsonPropertyName("class_5_min")] public string? Class5Min { get; init; }
+    [JsonPropertyName("score")] public int? Score { get; init; }
+    [JsonPropertyName("active_calories")] public int? ActiveCalories { get; init; }
+    [JsonPropertyName("average_met_minutes")] public double? AverageMetMinutes { get; init; }
+    [JsonPropertyName("contributors")] public ActivityContributors? Contributors { get; init; }
+    [JsonPropertyName("equivalent_walking_distance")] public int? EquivalentWalkingDistance { get; init; }
+    [JsonPropertyName("high_activity_met_minutes")] public int? HighActivityMetMinutes { get; init; }
+    [JsonPropertyName("high_activity_time")] public int? HighActivityTime { get; init; }
+    [JsonPropertyName("inactivity_alerts")] public int? InactivityAlerts { get; init; }
+    [JsonPropertyName("low_activity_met_minutes")] public int? LowActivityMetMinutes { get; init; }
+    [JsonPropertyName("low_activity_time")] public int? LowActivityTime { get; init; }
+    [JsonPropertyName("medium_activity_met_minutes")] public int? MediumActivityMetMinutes { get; init; }
+    [JsonPropertyName("medium_activity_time")] public int? MediumActivityTime { get; init; }
+    [JsonPropertyName("met")] public SampleModel? Met { get; init; }
+    [JsonPropertyName("meters_to_target")] public int? MetersToTarget { get; init; }
+    [JsonPropertyName("non_wear_time")] public int? NonWearTime { get; init; }
+    [JsonPropertyName("resting_time")] public int? RestingTime { get; init; }
+    [JsonPropertyName("sedentary_met_minutes")] public int? SedentaryMetMinutes { get; init; }
+    [JsonPropertyName("sedentary_time")] public int? SedentaryTime { get; init; }
+    [JsonPropertyName("steps")] public int? Steps { get; init; }
+    [JsonPropertyName("target_calories")] public int? TargetCalories { get; init; }
+    [JsonPropertyName("target_meters")] public int? TargetMeters { get; init; }
+    [JsonPropertyName("total_calories")] public int? TotalCalories { get; init; }
+    [JsonPropertyName("day")] public DateOnly? Day { get; init; }
+    [JsonPropertyName("timestamp")] public DateTimeOffset? Timestamp { get; init; }
+}
 
-public record ActivityContributors(
-    [property: JsonPropertyName("meet_daily_targets")] int? MeetDailyTargets,
-    [property: JsonPropertyName("move_every_hour")] int? MoveEveryHour,
-    [property: JsonPropertyName("recovery_time")] int? RecoveryTime,
-    [property: JsonPropertyName("stay_active")] int? StayActive,
-    [property: JsonPropertyName("training_frequency")] int? TrainingFrequency,
-    [property: JsonPropertyName("training_volume")] int? TrainingVolume
-);
+public record ActivityContributors
+{
+    [JsonPropertyName("meet_daily_targets")] public int? MeetDailyTargets { get; init; }
+    [JsonPropertyName("move_every_hour")] public int? MoveEveryHour { get; init; }
+    [JsonPropertyName("recovery_time")] public int? RecoveryTime { get; init; }
+    [JsonPropertyName("stay_active")] public int? StayActive { get; init; }
+    [JsonPropertyName("training_frequency")] public int? TrainingFrequency { get; init; }
+    [JsonPropertyName("training_volume")] public int? TrainingVolume { get; init; }
+}

@@ -2,9 +2,10 @@ using System.Text.Json.Serialization;
 
 namespace OuraMcp.OuraClient.Models;
 
-public record Vo2Max(
-    [property: JsonPropertyName("id")] string? Id,
-    [property: JsonPropertyName("day")] DateOnly? Day,
-    [property: JsonPropertyName("timestamp")] DateTimeOffset? Timestamp,
-    [property: JsonPropertyName("vo2_max")] double? Vo2MaxValue
-);
+public record Vo2Max
+{
+    [JsonPropertyName("id")] public string? Id { get; init; }
+    [JsonPropertyName("day")] public DateOnly? Day { get; init; }
+    [JsonPropertyName("timestamp")] public DateTimeOffset? Timestamp { get; init; }
+    [JsonPropertyName("vo2_max")] public double? Vo2MaxValue { get; init; }
+}

@@ -2,10 +2,11 @@ using System.Text.Json.Serialization;
 
 namespace OuraMcp.OuraClient.Models;
 
-public record Tag(
-    [property: JsonPropertyName("id")] string? Id,
-    [property: JsonPropertyName("day")] DateOnly? Day,
-    [property: JsonPropertyName("text")] string? Text,
-    [property: JsonPropertyName("timestamp")] DateTimeOffset? Timestamp,
-    [property: JsonPropertyName("tags")] IReadOnlyList<string>? Tags
-);
+public record Tag
+{
+    [JsonPropertyName("id")] public string? Id { get; init; }
+    [JsonPropertyName("day")] public DateOnly? Day { get; init; }
+    [JsonPropertyName("text")] public string? Text { get; init; }
+    [JsonPropertyName("timestamp")] public DateTimeOffset? Timestamp { get; init; }
+    [JsonPropertyName("tags")] public IReadOnlyList<string>? Tags { get; init; }
+}

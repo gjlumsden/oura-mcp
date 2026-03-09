@@ -2,14 +2,15 @@ using System.Text.Json.Serialization;
 
 namespace OuraMcp.OuraClient.Models;
 
-public record Session(
-    [property: JsonPropertyName("id")] string? Id,
-    [property: JsonPropertyName("day")] DateOnly? Day,
-    [property: JsonPropertyName("start_datetime")] DateTimeOffset? StartDatetime,
-    [property: JsonPropertyName("end_datetime")] DateTimeOffset? EndDatetime,
-    [property: JsonPropertyName("type")] string? Type,
-    [property: JsonPropertyName("heart_rate")] SampleModel? HeartRate,
-    [property: JsonPropertyName("heart_rate_variability")] SampleModel? HeartRateVariability,
-    [property: JsonPropertyName("mood")] string? Mood,
-    [property: JsonPropertyName("motion_count")] SampleModel? MotionCount
-);
+public record Session
+{
+    [JsonPropertyName("id")] public string? Id { get; init; }
+    [JsonPropertyName("day")] public DateOnly? Day { get; init; }
+    [JsonPropertyName("start_datetime")] public DateTimeOffset? StartDatetime { get; init; }
+    [JsonPropertyName("end_datetime")] public DateTimeOffset? EndDatetime { get; init; }
+    [JsonPropertyName("type")] public string? Type { get; init; }
+    [JsonPropertyName("heart_rate")] public SampleModel? HeartRate { get; init; }
+    [JsonPropertyName("heart_rate_variability")] public SampleModel? HeartRateVariability { get; init; }
+    [JsonPropertyName("mood")] public string? Mood { get; init; }
+    [JsonPropertyName("motion_count")] public SampleModel? MotionCount { get; init; }
+}

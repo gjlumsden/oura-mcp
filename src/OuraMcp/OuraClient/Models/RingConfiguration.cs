@@ -2,12 +2,13 @@ using System.Text.Json.Serialization;
 
 namespace OuraMcp.OuraClient.Models;
 
-public record RingConfiguration(
-    [property: JsonPropertyName("id")] string? Id,
-    [property: JsonPropertyName("color")] string? Color,
-    [property: JsonPropertyName("design")] string? Design,
-    [property: JsonPropertyName("firmware_version")] string? FirmwareVersion,
-    [property: JsonPropertyName("hardware_type")] string? HardwareType,
-    [property: JsonPropertyName("set_up_at")] DateTimeOffset? SetUpAt,
-    [property: JsonPropertyName("size")] int? Size
-);
+public record RingConfiguration
+{
+    [JsonPropertyName("id")] public string? Id { get; init; }
+    [JsonPropertyName("color")] public string? Color { get; init; }
+    [JsonPropertyName("design")] public string? Design { get; init; }
+    [JsonPropertyName("firmware_version")] public string? FirmwareVersion { get; init; }
+    [JsonPropertyName("hardware_type")] public string? HardwareType { get; init; }
+    [JsonPropertyName("set_up_at")] public DateTimeOffset? SetUpAt { get; init; }
+    [JsonPropertyName("size")] public int? Size { get; init; }
+}

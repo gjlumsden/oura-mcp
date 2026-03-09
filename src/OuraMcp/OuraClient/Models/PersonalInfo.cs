@@ -2,11 +2,12 @@ using System.Text.Json.Serialization;
 
 namespace OuraMcp.OuraClient.Models;
 
-public record PersonalInfo(
-    [property: JsonPropertyName("id")] string? Id,
-    [property: JsonPropertyName("age")] int? Age,
-    [property: JsonPropertyName("weight")] double? Weight,
-    [property: JsonPropertyName("height")] double? Height,
-    [property: JsonPropertyName("biological_sex")] string? BiologicalSex,
-    [property: JsonPropertyName("email")] string? Email
-);
+public record PersonalInfo
+{
+    [JsonPropertyName("id")] public string? Id { get; init; }
+    [JsonPropertyName("age")] public int? Age { get; init; }
+    [JsonPropertyName("weight")] public double? Weight { get; init; }
+    [JsonPropertyName("height")] public double? Height { get; init; }
+    [JsonPropertyName("biological_sex")] public string? BiologicalSex { get; init; }
+    [JsonPropertyName("email")] public string? Email { get; init; }
+}

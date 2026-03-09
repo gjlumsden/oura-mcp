@@ -2,24 +2,26 @@ using System.Text.Json.Serialization;
 
 namespace OuraMcp.OuraClient.Models;
 
-public record DailyReadiness(
-    [property: JsonPropertyName("id")] string? Id,
-    [property: JsonPropertyName("contributors")] ReadinessContributors? Contributors,
-    [property: JsonPropertyName("day")] DateOnly? Day,
-    [property: JsonPropertyName("score")] int? Score,
-    [property: JsonPropertyName("temperature_deviation")] double? TemperatureDeviation,
-    [property: JsonPropertyName("temperature_trend_deviation")] double? TemperatureTrendDeviation,
-    [property: JsonPropertyName("timestamp")] DateTimeOffset? Timestamp
-);
+public record DailyReadiness
+{
+    [JsonPropertyName("id")] public string? Id { get; init; }
+    [JsonPropertyName("contributors")] public ReadinessContributors? Contributors { get; init; }
+    [JsonPropertyName("day")] public DateOnly? Day { get; init; }
+    [JsonPropertyName("score")] public int? Score { get; init; }
+    [JsonPropertyName("temperature_deviation")] public double? TemperatureDeviation { get; init; }
+    [JsonPropertyName("temperature_trend_deviation")] public double? TemperatureTrendDeviation { get; init; }
+    [JsonPropertyName("timestamp")] public DateTimeOffset? Timestamp { get; init; }
+}
 
-public record ReadinessContributors(
-    [property: JsonPropertyName("activity_balance")] int? ActivityBalance,
-    [property: JsonPropertyName("body_temperature")] int? BodyTemperature,
-    [property: JsonPropertyName("hrv_balance")] int? HrvBalance,
-    [property: JsonPropertyName("previous_day_activity")] int? PreviousDayActivity,
-    [property: JsonPropertyName("previous_night")] int? PreviousNight,
-    [property: JsonPropertyName("recovery_index")] int? RecoveryIndex,
-    [property: JsonPropertyName("resting_heart_rate")] int? RestingHeartRate,
-    [property: JsonPropertyName("sleep_balance")] int? SleepBalance,
-    [property: JsonPropertyName("sleep_regularity")] int? SleepRegularity
-);
+public record ReadinessContributors
+{
+    [JsonPropertyName("activity_balance")] public int? ActivityBalance { get; init; }
+    [JsonPropertyName("body_temperature")] public int? BodyTemperature { get; init; }
+    [JsonPropertyName("hrv_balance")] public int? HrvBalance { get; init; }
+    [JsonPropertyName("previous_day_activity")] public int? PreviousDayActivity { get; init; }
+    [JsonPropertyName("previous_night")] public int? PreviousNight { get; init; }
+    [JsonPropertyName("recovery_index")] public int? RecoveryIndex { get; init; }
+    [JsonPropertyName("resting_heart_rate")] public int? RestingHeartRate { get; init; }
+    [JsonPropertyName("sleep_balance")] public int? SleepBalance { get; init; }
+    [JsonPropertyName("sleep_regularity")] public int? SleepRegularity { get; init; }
+}
