@@ -2,12 +2,12 @@
 
 ## Project Overview
 
-.NET 10 MCP server exposing Oura Ring health data as MCP tools. Uses the **MCP C# SDK** (`ModelContextProtocol` NuGet) with **HTTP transport + SSE** and **OAuth2 passthrough** to the Oura API v2. MCP hosts (GitHub Copilot, Claude, etc.) negotiate OAuth tokens with Oura directly; the server forwards the Bearer token on upstream API calls.
+.NET 10 MCP server exposing Oura Ring health data as MCP tools. Uses the **MCP C# SDK** (`ModelContextProtocol` NuGet) with **STDIO transport** and **CLI login (`az login` pattern)** to the Oura API v2. Users run `dotnet run -- login` once to authenticate via browser; tokens are persisted to `~/.oura-mcp/tokens.json` and refreshed automatically.
 
 ## Architecture
 
-- **Transport:** HTTP + SSE via ASP.NET Core (`app.MapMcp("/mcp")`).
-- **Auth:** OAuth2 passthrough — the MCP client handles the authorization code grant with Oura. The server reads `OURA_CLIENT_ID` / `OURA_CLIENT_SECRET` from env vars and never stores user tokens long-term.
+- **Transport:** STDIO via `WithStdioServerTransport()`. Logging routes to stderr to avoid interfering with the transport.
+- **Auth:** CLI login (`az login` pattern) — `dotnet run -- login` opens browser to Oura consent, exchanges the authorization code for tokens, and saves them to `~/.oura-mcp/tokens.json`. On subsequent runs the server loads tokens from disk and refreshes automatically when expired. `OURA_CLIENT_ID` / `OURA_CLIENT_SECRET` are read from env vars.
 - **API calls:** All Oura v2 endpoints under `https://api.ouraring.com/v2/usercollection/` are in scope.
 
 ## Project Structure
@@ -41,13 +41,14 @@ tests/OuraMcp.Tests/      # Unit/integration tests
 - Tool classes use **primary constructor injection** (e.g., `SleepTools(IOuraApiClient client)`).
 - Register MCP tools via `WithToolsFromAssembly()`.
 
-## Authentication — OAuth2
+## Authentication — CLI Login
 
-- **Authorization URL:** `https://cloud.ouraring.com/oauth/authorize`
-- **Token URL:** `https://api.ouraring.com/oauth/token`
-- **Grant type:** `authorization_code`
+- **Pattern:** `az login`-style — run `dotnet run -- login` to authorize via browser.
+- **Callback:** Local `HttpListener` on `http://localhost:8742/callback/` receives the OAuth code.
+- **Token storage:** `~/.oura-mcp/tokens.json` (owner-only permissions on Unix).
+- **Refresh:** `OuraTokenService` checks expiry on each API call and refreshes automatically.
 - **Scopes:** `email personal daily session heartrate tag workout spo2 ring_configuration`
-- Tokens passed as `Authorization: Bearer <token>`. Handle 401 by triggering refresh.
+- Tokens passed as `Authorization: Bearer <token>`.
 
 ## Tech Stack & Conventions
 

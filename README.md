@@ -9,7 +9,7 @@ A **.NET 10 MCP server** that exposes [Oura Ring](https://ouraring.com/) health 
 
 ## Overview
 
-This server connects to the **Oura API v2** and surfaces ring data — sleep, activity, readiness, heart rate, and more — as MCP tools over **HTTP transport with SSE**. Authentication uses **OAuth2 passthrough**: the MCP host negotiates tokens with Oura on the user's behalf, so the server never stores long-lived credentials.
+This server connects to the **Oura API v2** and surfaces ring data — sleep, activity, readiness, heart rate, and more — as MCP tools over **STDIO transport**. Authentication uses an **`az login`-style CLI flow**: run `dotnet run -- login` once to authorize with Oura in your browser, and tokens are persisted locally for automatic reuse and refresh.
 
 ## Prerequisites
 
@@ -24,7 +24,7 @@ This server connects to the **Oura API v2** and surfaces ring data — sleep, ac
 2. Click **Create New Application**.
 3. Fill in:
    - **Application Name**: e.g., "My MCP Server"
-   - **Redirect URI**: `http://localhost:5000/callback`
+   - **Redirect URI**: `http://localhost:8742/callback/`
    - **Scopes**: Select all scopes your use case needs (email, personal, daily, heartrate, workout, tag, session, spo2, ring_configuration).
 4. Note the **Client ID** and **Client Secret** shown after creation.
 
@@ -34,12 +34,23 @@ This server connects to the **Oura API v2** and surfaces ring data — sleep, ac
 git clone https://github.com/gjlumsden/oura-mcp.git
 cd oura-mcp
 dotnet build
-dotnet test   # Verify all 57 tests pass
+dotnet test
 ```
 
-### 3. Configure Your MCP Client
+### 3. Login
 
-Add the server to your MCP client config. The client launches the server process and injects your Oura credentials as environment variables.
+Run the login command to authenticate with Oura. This opens your browser to the Oura consent screen and saves tokens locally:
+
+```bash
+OURA_CLIENT_ID=<your-client-id> OURA_CLIENT_SECRET=<your-client-secret> \
+  dotnet run --project src/OuraMcp -- login
+```
+
+Tokens are saved to `~/.oura-mcp/tokens.json`. You only need to do this once — the server refreshes tokens automatically on subsequent runs.
+
+### 4. Configure Your MCP Client
+
+Add the server to your MCP client config. The client launches the server process via STDIO and injects your Oura credentials as environment variables.
 
 **VS Code (GitHub Copilot)** — add to `.vscode/mcp.json` or user settings:
 
@@ -77,7 +88,7 @@ Add the server to your MCP client config. The client launches the server process
 
 Replace `path/to/oura-mcp/src/OuraMcp` with the actual path on your machine.
 
-### 4. Start Using
+### 5. Start Using
 
 Once configured, your MCP client will discover the Oura tools automatically. Try prompts like:
 
@@ -113,34 +124,30 @@ Most date-range tools accept optional `startDate` and `endDate` parameters (form
 
 ## Authentication Flow
 
-This server uses **OAuth2 passthrough** — it delegates authentication to the MCP transport layer:
+This server uses an **`az login`-style CLI authentication** pattern, similar to the [Azure MCP Server](https://github.com/Azure/azure-mcp):
 
-1. MCP client connects to the server over HTTP+SSE.
-2. The server challenges with a **401** directing the client to Oura's OAuth consent screen.
-3. The user authorizes access; Oura issues tokens via the authorization code grant.
-4. The MCP client exchanges tokens and presents a **Bearer token** on all subsequent requests.
-5. The server forwards the Bearer token to the Oura API on each upstream call.
+1. **One-time login:** Run `dotnet run -- login` to open your browser to the Oura OAuth consent screen.
+2. **Token exchange:** After you authorize, a local callback server on `http://localhost:8742/callback/` receives the authorization code and exchanges it for access/refresh tokens.
+3. **Persistent storage:** Tokens are saved to `~/.oura-mcp/tokens.json` (file permissions restricted to owner on Unix).
+4. **Automatic refresh:** On startup the server loads saved tokens and refreshes them automatically when expired.
 
 OAuth credentials (`OURA_CLIENT_ID`, `OURA_CLIENT_SECRET`) are read from environment variables — never stored in source.
 
 ## Development
 
 ```bash
-# Build
+# First-time setup: authenticate with Oura
+OURA_CLIENT_ID=<id> OURA_CLIENT_SECRET=<secret> dotnet run --project src/OuraMcp -- login
+
+# Build and test
 dotnet build
-
-# Run tests
 dotnet test
-
-# Run the server locally
-OURA_CLIENT_ID=<id> OURA_CLIENT_SECRET=<secret> dotnet run --project src/OuraMcp
 ```
 
 ## Technology Stack
 
 - **.NET 10** / C# with nullable reference types
-- **ModelContextProtocol** NuGet package (MCP C# SDK) — HTTP transport with SSE
-- **ASP.NET Core** minimal API host
+- **ModelContextProtocol** NuGet package (MCP C# SDK) — STDIO transport
 - **System.Text.Json** for serialization
 - **IHttpClientFactory** for HTTP client lifecycle management
 
