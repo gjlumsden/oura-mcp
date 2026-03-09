@@ -24,14 +24,14 @@ public class WellnessToolsTests
             new() { Id = "stress-1", Day = new DateOnly(2025, 1, 15), DaySummary = "restored" }
         };
         _mockClient
-            .Setup(c => c.GetDailyStressAsync(It.IsAny<DateOnly?>(), It.IsAny<DateOnly?>(), It.IsAny<CancellationToken>()))
+            .Setup(c => c.GetDailyStressAsync(It.IsAny<DateOnly?>(), It.IsAny<DateOnly?>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(expected);
 
         var result = await _sut.GetDailyStress(null, null);
 
         result.Should().NotBeNullOrEmpty();
         _mockClient.Verify(
-            c => c.GetDailyStressAsync(null, null, It.IsAny<CancellationToken>()),
+            c => c.GetDailyStressAsync(null, null, It.IsAny<string>(), It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -43,14 +43,14 @@ public class WellnessToolsTests
             new() { Id = "resilience-1", Day = new DateOnly(2025, 1, 15), Level = "strong" }
         };
         _mockClient
-            .Setup(c => c.GetDailyResilienceAsync(It.IsAny<DateOnly?>(), It.IsAny<DateOnly?>(), It.IsAny<CancellationToken>()))
+            .Setup(c => c.GetDailyResilienceAsync(It.IsAny<DateOnly?>(), It.IsAny<DateOnly?>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(expected);
 
         var result = await _sut.GetDailyResilience(null, null);
 
         result.Should().NotBeNullOrEmpty();
         _mockClient.Verify(
-            c => c.GetDailyResilienceAsync(null, null, It.IsAny<CancellationToken>()),
+            c => c.GetDailyResilienceAsync(null, null, It.IsAny<string>(), It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -62,14 +62,14 @@ public class WellnessToolsTests
             new() { Id = "rest-1" }
         };
         _mockClient
-            .Setup(c => c.GetRestModePeriodsAsync(It.IsAny<DateOnly?>(), It.IsAny<DateOnly?>(), It.IsAny<CancellationToken>()))
+            .Setup(c => c.GetRestModePeriodsAsync(It.IsAny<DateOnly?>(), It.IsAny<DateOnly?>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(expected);
 
         var result = await _sut.GetRestModePeriods(null, null);
 
         result.Should().NotBeNullOrEmpty();
         _mockClient.Verify(
-            c => c.GetRestModePeriodsAsync(null, null, It.IsAny<CancellationToken>()),
+            c => c.GetRestModePeriodsAsync(null, null, It.IsAny<string>(), It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -81,14 +81,14 @@ public class WellnessToolsTests
 
         _mockClient
             .Setup(c => c.GetDailyStressAsync(
-                new DateOnly(2025, 5, 1), new DateOnly(2025, 5, 31), It.IsAny<CancellationToken>()))
+                new DateOnly(2025, 5, 1), new DateOnly(2025, 5, 31), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<DailyStress>());
 
         await _sut.GetDailyStress(startDate, endDate);
 
         _mockClient.Verify(
             c => c.GetDailyStressAsync(
-                new DateOnly(2025, 5, 1), new DateOnly(2025, 5, 31), It.IsAny<CancellationToken>()),
+                new DateOnly(2025, 5, 1), new DateOnly(2025, 5, 31), It.IsAny<string>(), It.IsAny<CancellationToken>()),
             Times.Once);
     }
 }

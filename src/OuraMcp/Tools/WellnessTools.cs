@@ -16,7 +16,7 @@ public class WellnessTools(IOuraApiClient client)
     {
         var start = DateHelper.ParseDate(startDate, nameof(startDate));
         var end = DateHelper.ParseDate(endDate, nameof(endDate));
-        var result = await client.GetDailyStressAsync(start, end, cancellationToken);
+        var result = await client.GetDailyStressAsync(start, end, ct: cancellationToken);
 
         return JsonSerializer.Serialize(result);
     }
@@ -29,7 +29,7 @@ public class WellnessTools(IOuraApiClient client)
     {
         var start = DateHelper.ParseDate(startDate, nameof(startDate));
         var end = DateHelper.ParseDate(endDate, nameof(endDate));
-        var result = await client.GetDailyResilienceAsync(start, end, cancellationToken);
+        var result = await client.GetDailyResilienceAsync(start, end, ct: cancellationToken);
 
         return JsonSerializer.Serialize(result);
     }
@@ -42,7 +42,7 @@ public class WellnessTools(IOuraApiClient client)
     {
         var start = DateHelper.ParseDate(startDate, nameof(startDate));
         var end = DateHelper.ParseDate(endDate, nameof(endDate));
-        var result = await client.GetRestModePeriodsAsync(start, end, cancellationToken);
+        var result = await client.GetRestModePeriodsAsync(start, end, ct: cancellationToken);
 
         return JsonSerializer.Serialize(result);
     }

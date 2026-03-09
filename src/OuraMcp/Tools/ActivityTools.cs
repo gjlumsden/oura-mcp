@@ -16,7 +16,7 @@ public class ActivityTools(IOuraApiClient client)
     {
         var start = DateHelper.ParseDate(startDate, nameof(startDate));
         var end = DateHelper.ParseDate(endDate, nameof(endDate));
-        var result = await client.GetDailyActivityAsync(start, end, cancellationToken);
+        var result = await client.GetDailyActivityAsync(start, end, ct: cancellationToken);
 
         return JsonSerializer.Serialize(result);
     }
@@ -29,7 +29,7 @@ public class ActivityTools(IOuraApiClient client)
     {
         var start = DateHelper.ParseDate(startDate, nameof(startDate));
         var end = DateHelper.ParseDate(endDate, nameof(endDate));
-        var result = await client.GetWorkoutsAsync(start, end, cancellationToken);
+        var result = await client.GetWorkoutsAsync(start, end, ct: cancellationToken);
 
         return JsonSerializer.Serialize(result);
     }
@@ -42,7 +42,7 @@ public class ActivityTools(IOuraApiClient client)
     {
         var start = DateHelper.ParseDate(startDate, nameof(startDate));
         var end = DateHelper.ParseDate(endDate, nameof(endDate));
-        var result = await client.GetSessionsAsync(start, end, cancellationToken);
+        var result = await client.GetSessionsAsync(start, end, ct: cancellationToken);
 
         return JsonSerializer.Serialize(result);
     }

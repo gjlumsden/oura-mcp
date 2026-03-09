@@ -24,14 +24,14 @@ public class SleepToolsTests
             new() { Id = "sleep-1", Day = new DateOnly(2025, 1, 15), Score = 85 }
         };
         _mockClient
-            .Setup(c => c.GetDailySleepAsync(It.IsAny<DateOnly?>(), It.IsAny<DateOnly?>(), It.IsAny<CancellationToken>()))
+            .Setup(c => c.GetDailySleepAsync(It.IsAny<DateOnly?>(), It.IsAny<DateOnly?>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(expected);
 
         var result = await _sut.GetDailySleep(null, null);
 
         result.Should().NotBeNullOrEmpty();
         _mockClient.Verify(
-            c => c.GetDailySleepAsync(null, null, It.IsAny<CancellationToken>()),
+            c => c.GetDailySleepAsync(null, null, It.IsAny<string>(), It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -43,14 +43,14 @@ public class SleepToolsTests
             new() { Id = "period-1", Day = new DateOnly(2025, 1, 15) }
         };
         _mockClient
-            .Setup(c => c.GetSleepPeriodsAsync(It.IsAny<DateOnly?>(), It.IsAny<DateOnly?>(), It.IsAny<CancellationToken>()))
+            .Setup(c => c.GetSleepPeriodsAsync(It.IsAny<DateOnly?>(), It.IsAny<DateOnly?>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(expected);
 
         var result = await _sut.GetSleepPeriods(null, null);
 
         result.Should().NotBeNullOrEmpty();
         _mockClient.Verify(
-            c => c.GetSleepPeriodsAsync(null, null, It.IsAny<CancellationToken>()),
+            c => c.GetSleepPeriodsAsync(null, null, It.IsAny<string>(), It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -62,14 +62,14 @@ public class SleepToolsTests
             new() { Id = "time-1", Day = new DateOnly(2025, 1, 15) }
         };
         _mockClient
-            .Setup(c => c.GetSleepTimeAsync(It.IsAny<DateOnly?>(), It.IsAny<DateOnly?>(), It.IsAny<CancellationToken>()))
+            .Setup(c => c.GetSleepTimeAsync(It.IsAny<DateOnly?>(), It.IsAny<DateOnly?>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(expected);
 
         var result = await _sut.GetSleepTime(null, null);
 
         result.Should().NotBeNullOrEmpty();
         _mockClient.Verify(
-            c => c.GetSleepTimeAsync(null, null, It.IsAny<CancellationToken>()),
+            c => c.GetSleepTimeAsync(null, null, It.IsAny<string>(), It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -82,13 +82,13 @@ public class SleepToolsTests
         var expectedEnd = new DateOnly(2025, 1, 31);
 
         _mockClient
-            .Setup(c => c.GetDailySleepAsync(expectedStart, expectedEnd, It.IsAny<CancellationToken>()))
+            .Setup(c => c.GetDailySleepAsync(expectedStart, expectedEnd, It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<DailySleep>());
 
         await _sut.GetDailySleep(startDate, endDate);
 
         _mockClient.Verify(
-            c => c.GetDailySleepAsync(expectedStart, expectedEnd, It.IsAny<CancellationToken>()),
+            c => c.GetDailySleepAsync(expectedStart, expectedEnd, It.IsAny<string>(), It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -96,7 +96,7 @@ public class SleepToolsTests
     public async Task GetDailySleep_ApiThrows_PropagatesError()
     {
         _mockClient
-            .Setup(c => c.GetDailySleepAsync(It.IsAny<DateOnly?>(), It.IsAny<DateOnly?>(), It.IsAny<CancellationToken>()))
+            .Setup(c => c.GetDailySleepAsync(It.IsAny<DateOnly?>(), It.IsAny<DateOnly?>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new HttpRequestException("API unavailable"));
 
         var act = () => _sut.GetDailySleep(null, null);

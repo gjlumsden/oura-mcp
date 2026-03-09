@@ -16,7 +16,7 @@ public class SleepTools(IOuraApiClient client)
     {
         var start = DateHelper.ParseDate(startDate, nameof(startDate));
         var end = DateHelper.ParseDate(endDate, nameof(endDate));
-        var result = await client.GetDailySleepAsync(start, end, cancellationToken);
+        var result = await client.GetDailySleepAsync(start, end, ct: cancellationToken);
 
         return JsonSerializer.Serialize(result);
     }
@@ -29,7 +29,7 @@ public class SleepTools(IOuraApiClient client)
     {
         var start = DateHelper.ParseDate(startDate, nameof(startDate));
         var end = DateHelper.ParseDate(endDate, nameof(endDate));
-        var result = await client.GetSleepPeriodsAsync(start, end, cancellationToken);
+        var result = await client.GetSleepPeriodsAsync(start, end, ct: cancellationToken);
 
         return JsonSerializer.Serialize(result);
     }
@@ -42,7 +42,7 @@ public class SleepTools(IOuraApiClient client)
     {
         var start = DateHelper.ParseDate(startDate, nameof(startDate));
         var end = DateHelper.ParseDate(endDate, nameof(endDate));
-        var result = await client.GetSleepTimeAsync(start, end, cancellationToken);
+        var result = await client.GetSleepTimeAsync(start, end, ct: cancellationToken);
 
         return JsonSerializer.Serialize(result);
     }

@@ -16,7 +16,7 @@ public class TagTools(IOuraApiClient client)
     {
         var start = DateHelper.ParseDate(startDate, nameof(startDate));
         var end = DateHelper.ParseDate(endDate, nameof(endDate));
-        var result = await client.GetTagsAsync(start, end, cancellationToken);
+        var result = await client.GetTagsAsync(start, end, ct: cancellationToken);
 
         return JsonSerializer.Serialize(result);
     }
@@ -29,7 +29,7 @@ public class TagTools(IOuraApiClient client)
     {
         var start = DateHelper.ParseDate(startDate, nameof(startDate));
         var end = DateHelper.ParseDate(endDate, nameof(endDate));
-        var result = await client.GetEnhancedTagsAsync(start, end, cancellationToken);
+        var result = await client.GetEnhancedTagsAsync(start, end, ct: cancellationToken);
 
         return JsonSerializer.Serialize(result);
     }

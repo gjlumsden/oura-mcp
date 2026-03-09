@@ -16,7 +16,7 @@ public class ReadinessTools(IOuraApiClient client)
     {
         var start = DateHelper.ParseDate(startDate, nameof(startDate));
         var end = DateHelper.ParseDate(endDate, nameof(endDate));
-        var result = await client.GetDailyReadinessAsync(start, end, cancellationToken);
+        var result = await client.GetDailyReadinessAsync(start, end, ct: cancellationToken);
 
         return JsonSerializer.Serialize(result);
     }

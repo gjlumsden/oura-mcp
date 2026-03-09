@@ -16,7 +16,7 @@ public class BodyTools(IOuraApiClient client)
     {
         var start = DateHelper.ParseDate(startDate, nameof(startDate));
         var end = DateHelper.ParseDate(endDate, nameof(endDate));
-        var result = await client.GetHeartRateAsync(start, end, cancellationToken);
+        var result = await client.GetHeartRateAsync(start, end, ct: cancellationToken);
 
         return JsonSerializer.Serialize(result);
     }
@@ -29,7 +29,7 @@ public class BodyTools(IOuraApiClient client)
     {
         var start = DateHelper.ParseDate(startDate, nameof(startDate));
         var end = DateHelper.ParseDate(endDate, nameof(endDate));
-        var result = await client.GetHeartRateVariabilityAsync(start, end, cancellationToken);
+        var result = await client.GetHeartRateVariabilityAsync(start, end, ct: cancellationToken);
 
         return JsonSerializer.Serialize(result);
     }
@@ -42,7 +42,7 @@ public class BodyTools(IOuraApiClient client)
     {
         var start = DateHelper.ParseDate(startDate, nameof(startDate));
         var end = DateHelper.ParseDate(endDate, nameof(endDate));
-        var result = await client.GetDailySpo2Async(start, end, cancellationToken);
+        var result = await client.GetDailySpo2Async(start, end, ct: cancellationToken);
 
         return JsonSerializer.Serialize(result);
     }
@@ -55,7 +55,7 @@ public class BodyTools(IOuraApiClient client)
     {
         var start = DateHelper.ParseDate(startDate, nameof(startDate));
         var end = DateHelper.ParseDate(endDate, nameof(endDate));
-        var result = await client.GetVo2MaxAsync(start, end, cancellationToken);
+        var result = await client.GetVo2MaxAsync(start, end, ct: cancellationToken);
 
         return JsonSerializer.Serialize(result);
     }
@@ -68,7 +68,7 @@ public class BodyTools(IOuraApiClient client)
     {
         var start = DateHelper.ParseDate(startDate, nameof(startDate));
         var end = DateHelper.ParseDate(endDate, nameof(endDate));
-        var result = await client.GetCardiovascularAgeAsync(start, end, cancellationToken);
+        var result = await client.GetCardiovascularAgeAsync(start, end, ct: cancellationToken);
 
         return JsonSerializer.Serialize(result);
     }
