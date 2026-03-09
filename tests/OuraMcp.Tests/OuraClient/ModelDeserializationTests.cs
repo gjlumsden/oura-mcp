@@ -646,4 +646,34 @@ public class ModelDeserializationTests
         result.Episodes[1].Tags.Should().BeEquivalentTo(new[] { "recovering" });
         result.Episodes[1].Timestamp.Should().Be(DateTimeOffset.Parse("2024-12-09T08:00:00+00:00"));
     }
+
+    [Fact]
+    public void SampleModel_Deserializes_AllFields()
+    {
+        const string json = """{"interval": 60.0, "items": [72.5, 73.0, null, 71.8], "timestamp": "2024-01-01T00:00:00+00:00"}""";
+
+        var result = JsonSerializer.Deserialize<SampleModel>(json, JsonOptions);
+
+        result.Should().NotBeNull();
+        result!.Interval.Should().Be(60.0);
+        result.Items.Should().HaveCount(4);
+        result.Items![0].Should().Be(72.5);
+        result.Items[1].Should().Be(73.0);
+        result.Items[2].Should().BeNull();
+        result.Items[3].Should().Be(71.8);
+        result.Timestamp.Should().Be(DateTimeOffset.Parse("2024-01-01T00:00:00+00:00"));
+    }
+
+    [Fact]
+    public void SampleModel_Deserializes_WithNullFields()
+    {
+        const string json = """{}""";
+
+        var result = JsonSerializer.Deserialize<SampleModel>(json, JsonOptions);
+
+        result.Should().NotBeNull();
+        result!.Interval.Should().BeNull();
+        result.Items.Should().BeNull();
+        result.Timestamp.Should().BeNull();
+    }
 }
