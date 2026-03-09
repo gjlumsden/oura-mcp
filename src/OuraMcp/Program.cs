@@ -20,7 +20,7 @@ builder.Services.Configure<OuraOAuthOptions>(opts =>
         ?? throw new InvalidOperationException("OURA_CLIENT_ID is required");
     opts.ClientSecret = builder.Configuration["OURA_CLIENT_SECRET"]
         ?? throw new InvalidOperationException("OURA_CLIENT_SECRET is required");
-    opts.RedirectUri = builder.Configuration["OURA_REDIRECT_URI"] ?? "http://localhost:5000/callback";
+    opts.RedirectUri = builder.Configuration["OURA_REDIRECT_URI"] ?? "http://localhost:8742/callback/";
 });
 
 // DataProtection: encrypts tokens at rest using DPAPI (Windows) or key files (Linux/macOS)
