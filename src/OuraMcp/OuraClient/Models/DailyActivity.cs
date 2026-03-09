@@ -2,6 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace OuraMcp.OuraClient.Models;
 
+/// <summary>Oura daily activity summary including calories, steps, and movement metrics.</summary>
 public record DailyActivity
 {
     [JsonPropertyName("id")] public string? Id { get; init; }
@@ -32,6 +33,7 @@ public record DailyActivity
     [JsonPropertyName("timestamp")] public DateTimeOffset? Timestamp { get; init; }
 }
 
+/// <summary>Contributors to the daily activity score.</summary>
 public record ActivityContributors
 {
     [JsonPropertyName("meet_daily_targets")] public int? MeetDailyTargets { get; init; }

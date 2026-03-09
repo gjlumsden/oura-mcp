@@ -2,6 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace OuraMcp.OuraClient.Models;
 
+/// <summary>Oura workout record with activity type, calories, distance, and intensity.</summary>
 public record Workout
 {
     [JsonPropertyName("id")] public string? Id { get; init; }

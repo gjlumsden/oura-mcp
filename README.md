@@ -44,25 +44,25 @@ Replace `path/to/src/OuraMcp` with the actual path to the project directory on y
 
 | Tool | Description |
 |------|-------------|
-| `GetPersonalInfo` | Retrieves personal info from the Oura Ring account. |
-| `GetRingConfiguration` | Retrieves ring configuration details from the Oura Ring. |
-| `GetDailySleep` | Retrieves daily sleep scores and summaries from the Oura Ring. |
-| `GetSleepPeriods` | Retrieves detailed sleep period data from the Oura Ring. |
-| `GetSleepTime` | Retrieves recommended sleep time windows from the Oura Ring. |
-| `GetDailyActivity` | Retrieves daily activity scores and step counts from the Oura Ring. |
-| `GetWorkouts` | Retrieves workout data from the Oura Ring. |
-| `GetSessions` | Retrieves session data such as meditation and breathing exercises from the Oura Ring. |
-| `GetDailyReadiness` | Retrieves daily readiness scores from the Oura Ring. |
-| `GetDailyStress` | Retrieves daily stress data from the Oura Ring. |
-| `GetDailyResilience` | Retrieves daily resilience data from the Oura Ring. |
-| `GetRestModePeriods` | Retrieves rest mode period data from the Oura Ring. |
-| `GetHeartRate` | Retrieves heart rate data from the Oura Ring. |
-| `GetHeartRateVariability` | Retrieves heart rate variability data from the Oura Ring. |
-| `GetDailySpo2` | Retrieves daily SpO2 blood oxygen data from the Oura Ring. |
-| `GetVo2Max` | Retrieves VO2 max estimates from the Oura Ring. |
-| `GetCardiovascularAge` | Retrieves cardiovascular age estimates from the Oura Ring. |
-| `GetTags` | Retrieves tags from the Oura Ring. |
-| `GetEnhancedTags` | Retrieves enhanced tags from the Oura Ring. |
+| `get_personal_info` | Retrieves personal info from the Oura Ring account. |
+| `get_ring_configuration` | Retrieves ring configuration details from the Oura Ring. |
+| `get_daily_sleep` | Retrieves daily sleep scores and summaries from the Oura Ring. |
+| `get_sleep_periods` | Retrieves detailed sleep period data from the Oura Ring. |
+| `get_sleep_time` | Retrieves recommended sleep time windows from the Oura Ring. |
+| `get_daily_activity` | Retrieves daily activity scores and step counts from the Oura Ring. |
+| `get_workouts` | Retrieves workout data from the Oura Ring. |
+| `get_sessions` | Retrieves session data such as meditation and breathing exercises from the Oura Ring. |
+| `get_daily_readiness` | Retrieves daily readiness scores from the Oura Ring. |
+| `get_daily_stress` | Retrieves daily stress data from the Oura Ring. |
+| `get_daily_resilience` | Retrieves daily resilience data from the Oura Ring. |
+| `get_rest_mode_periods` | Retrieves rest mode period data from the Oura Ring. |
+| `get_heart_rate` | Retrieves heart rate data from the Oura Ring. |
+| `get_heart_rate_variability` | Retrieves heart rate variability data from the Oura Ring. |
+| `get_daily_spo2` | Retrieves daily SpO2 blood oxygen data from the Oura Ring. |
+| `get_vo2_max` | Retrieves VO2 max estimates from the Oura Ring. |
+| `get_cardiovascular_age` | Retrieves cardiovascular age estimates from the Oura Ring. |
+| `get_tags` | Retrieves tags from the Oura Ring. |
+| `get_enhanced_tags` | Retrieves enhanced tags from the Oura Ring. |
 
 Most date-range tools accept optional `startDate` and `endDate` parameters (format: `YYYY-MM-DD`).
 

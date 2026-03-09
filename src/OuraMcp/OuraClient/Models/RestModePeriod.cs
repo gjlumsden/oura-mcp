@@ -2,6 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace OuraMcp.OuraClient.Models;
 
+/// <summary>Oura rest mode period spanning a date range with associated episodes.</summary>
 public record RestModePeriod
 {
     [JsonPropertyName("id")] public string? Id { get; init; }
@@ -12,6 +13,7 @@ public record RestModePeriod
     [JsonPropertyName("start_time")] public DateTimeOffset? StartTime { get; init; }
 }
 
+/// <summary>Individual episode within a rest mode period.</summary>
 public record RestModeEpisode
 {
     [JsonPropertyName("tags")] public IReadOnlyList<string>? Tags { get; init; }

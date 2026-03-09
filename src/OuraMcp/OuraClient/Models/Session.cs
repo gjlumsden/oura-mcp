@@ -2,6 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace OuraMcp.OuraClient.Models;
 
+/// <summary>Oura guided or unguided session (e.g., meditation, breathing) with biometric samples.</summary>
 public record Session
 {
     [JsonPropertyName("id")] public string? Id { get; init; }

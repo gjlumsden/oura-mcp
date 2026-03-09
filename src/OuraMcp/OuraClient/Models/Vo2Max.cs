@@ -2,6 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace OuraMcp.OuraClient.Models;
 
+/// <summary>Oura estimated VO2 max measurement for a given day.</summary>
 public record Vo2Max
 {
     [JsonPropertyName("id")] public string? Id { get; init; }

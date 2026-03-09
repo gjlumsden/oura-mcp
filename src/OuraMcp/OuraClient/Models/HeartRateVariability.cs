@@ -2,6 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace OuraMcp.OuraClient.Models;
 
+/// <summary>Oura daily heart rate variability data containing timestamped HRV items.</summary>
 public record HeartRateVariability
 {
     [JsonPropertyName("id")] public string? Id { get; init; }
@@ -10,6 +11,7 @@ public record HeartRateVariability
     [JsonPropertyName("items")] public IReadOnlyList<HrvItem>? Items { get; init; }
 }
 
+/// <summary>Individual HRV measurement with RMSSD and SDNN averages.</summary>
 public record HrvItem
 {
     [JsonPropertyName("avg_rmssd")] public double? AvgRmssd { get; init; }

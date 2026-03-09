@@ -2,6 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace OuraMcp.OuraClient.Models;
 
+/// <summary>Oura daily stress summary with high-stress and recovery durations.</summary>
 public record DailyStress
 {
     [JsonPropertyName("id")] public string? Id { get; init; }

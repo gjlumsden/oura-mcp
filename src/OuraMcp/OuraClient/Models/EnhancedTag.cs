@@ -2,6 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace OuraMcp.OuraClient.Models;
 
+/// <summary>Oura enhanced tag with typed tag code, time range, and optional comment.</summary>
 public record EnhancedTag
 {
     [JsonPropertyName("id")] public string? Id { get; init; }

@@ -2,6 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace OuraMcp.OuraClient.Models;
 
+/// <summary>Oura recommended sleep time with optimal bedtime window and status.</summary>
 public record SleepTime
 {
     [JsonPropertyName("id")] public string? Id { get; init; }
@@ -11,6 +12,7 @@ public record SleepTime
     [JsonPropertyName("status")] public string? Status { get; init; }
 }
 
+/// <summary>Optimal bedtime window expressed as start and end offsets from midnight.</summary>
 public record SleepTimeWindow
 {
     [JsonPropertyName("day_tz")] public int? DayTz { get; init; }

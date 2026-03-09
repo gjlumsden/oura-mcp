@@ -2,6 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace OuraMcp.OuraClient.Models;
 
+/// <summary>Oura ring hardware configuration including color, design, size, and firmware.</summary>
 public record RingConfiguration
 {
     [JsonPropertyName("id")] public string? Id { get; init; }

@@ -2,6 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace OuraMcp.OuraClient.Models;
 
+/// <summary>Oura sleep period with detailed duration, staging, and biometric data.</summary>
 public record SleepPeriod
 {
     [JsonPropertyName("id")] public string? Id { get; init; }
@@ -35,6 +36,7 @@ public record SleepPeriod
     [JsonPropertyName("type")] public string? Type { get; init; }
 }
 
+/// <summary>Readiness summary embedded within a sleep period.</summary>
 public record ReadinessSummary
 {
     [JsonPropertyName("contributors")] public ReadinessContributors? Contributors { get; init; }

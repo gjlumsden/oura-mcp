@@ -2,6 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace OuraMcp.OuraClient.Models;
 
+/// <summary>Oura daily resilience assessment indicating stress and recovery capacity.</summary>
 public record DailyResilience
 {
     [JsonPropertyName("id")] public string? Id { get; init; }
@@ -10,6 +11,7 @@ public record DailyResilience
     [JsonPropertyName("level")] public string? Level { get; init; }
 }
 
+/// <summary>Contributors to the daily resilience level.</summary>
 public record ResilienceContributors
 {
     [JsonPropertyName("sleep_recovery")] public double? SleepRecovery { get; init; }

@@ -2,6 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace OuraMcp.OuraClient.Models;
 
+/// <summary>Oura daily readiness score and related temperature/HRV metrics.</summary>
 public record DailyReadiness
 {
     [JsonPropertyName("id")] public string? Id { get; init; }
@@ -13,6 +14,7 @@ public record DailyReadiness
     [JsonPropertyName("timestamp")] public DateTimeOffset? Timestamp { get; init; }
 }
 
+/// <summary>Contributors to the daily readiness score.</summary>
 public record ReadinessContributors
 {
     [JsonPropertyName("activity_balance")] public int? ActivityBalance { get; init; }

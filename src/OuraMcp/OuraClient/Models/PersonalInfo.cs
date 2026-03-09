@@ -2,6 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace OuraMcp.OuraClient.Models;
 
+/// <summary>Oura API response for personal user information.</summary>
 public record PersonalInfo
 {
     [JsonPropertyName("id")] public string? Id { get; init; }

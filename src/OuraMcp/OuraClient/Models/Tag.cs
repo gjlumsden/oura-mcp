@@ -2,6 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace OuraMcp.OuraClient.Models;
 
+/// <summary>Oura user-created tag with free-text and categorical labels.</summary>
 public record Tag
 {
     [JsonPropertyName("id")] public string? Id { get; init; }
