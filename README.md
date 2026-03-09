@@ -11,24 +11,39 @@ This server connects to the **Oura API v2** and surfaces ring data — sleep, ac
 - [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0)
 - An Oura API application registered at <https://cloud.ouraring.com/oauth/applications>
 
-## Setup
+## Getting Started
 
-1. **Register an Oura OAuth app** at <https://cloud.ouraring.com/oauth/applications>.
-2. Note your **Client ID** and **Client Secret**.
-3. Configure your MCP client (see below).
+### 1. Register an Oura OAuth Application
 
-## MCP Client Configuration
+1. Go to <https://cloud.ouraring.com/oauth/applications> and log in with your Oura account.
+2. Click **Create New Application**.
+3. Fill in:
+   - **Application Name**: e.g., "My MCP Server"
+   - **Redirect URI**: `http://localhost:5000/callback`
+   - **Scopes**: Select all scopes your use case needs (email, personal, daily, heartrate, workout, tag, session, spo2, ring_configuration).
+4. Note the **Client ID** and **Client Secret** shown after creation.
 
-### VS Code (GitHub Copilot) / Claude Desktop
+### 2. Clone and Build
 
-Add the server to your MCP client configuration:
+```bash
+git clone https://github.com/gjlumsden/oura-mcp.git
+cd oura-mcp
+dotnet build
+dotnet test   # Verify all 57 tests pass
+```
+
+### 3. Configure Your MCP Client
+
+Add the server to your MCP client config. The client launches the server process and injects your Oura credentials as environment variables.
+
+**VS Code (GitHub Copilot)** — add to `.vscode/mcp.json` or user settings:
 
 ```json
 {
   "mcpServers": {
     "oura": {
       "command": "dotnet",
-      "args": ["run", "--project", "path/to/src/OuraMcp"],
+      "args": ["run", "--project", "path/to/oura-mcp/src/OuraMcp"],
       "env": {
         "OURA_CLIENT_ID": "<your-client-id>",
         "OURA_CLIENT_SECRET": "<your-client-secret>"
@@ -38,7 +53,32 @@ Add the server to your MCP client configuration:
 }
 ```
 
-Replace `path/to/src/OuraMcp` with the actual path to the project directory on your machine.
+**Claude Desktop** — add to `claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "oura": {
+      "command": "dotnet",
+      "args": ["run", "--project", "path/to/oura-mcp/src/OuraMcp"],
+      "env": {
+        "OURA_CLIENT_ID": "<your-client-id>",
+        "OURA_CLIENT_SECRET": "<your-client-secret>"
+      }
+    }
+  }
+}
+```
+
+Replace `path/to/oura-mcp/src/OuraMcp` with the actual path on your machine.
+
+### 4. Start Using
+
+Once configured, your MCP client will discover the Oura tools automatically. Try prompts like:
+
+- *"How did I sleep last night?"*
+- *"Show my readiness score for the past week"*
+- *"What was my resting heart rate trend this month?"*
 
 ## Available Tools
 
