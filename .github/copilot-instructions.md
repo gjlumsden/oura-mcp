@@ -13,6 +13,7 @@ This is a **.NET MCP (Model Context Protocol) Server** that exposes Oura Ring he
 2. Never guess at Oura API response shapes or MCP SDK method signatures — look them up first.
 3. Never commit secrets, tokens, or credentials to source code.
 4. **Keep the README up to date.** When adding features, changing configuration, or modifying the project structure, update `README.md` to reflect those changes.
+5. **Follow Test-Driven Development (TDD).** Write failing tests first, then implement the minimum code to pass, then refactor. Every new feature or bug fix starts with a test.
 
 ## Authentication — OAuth2 (Required)
 
@@ -55,7 +56,7 @@ Most collection endpoints accept `start_date`, `end_date`, and `next_token` quer
 
 ## Technology Stack
 
-- **.NET 9+** / C# with nullable reference types enabled
+- **.NET 10** / C# with nullable reference types enabled. Latest LTS version of .NET should be used.
 - **ModelContextProtocol** NuGet package (MCP C# SDK) — use `--prerelease` if needed
 - **Microsoft.Extensions.AI** for AI abstractions
 - Expose each Oura data category as an MCP **Tool**

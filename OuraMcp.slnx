@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/OuraMcp/OuraMcp.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/OuraMcp.Tests/OuraMcp.Tests.csproj" />
+  </Folder>
+</Solution>
