@@ -8,7 +8,7 @@ namespace OuraMcp.Tools;
 [McpServerToolType]
 public class BodyTools(IOuraApiClient client)
 {
-    [McpServerTool, Description("Retrieves heart rate data from the Oura Ring.")]
+    [McpServerTool(Name = "get_heart_rate"), Description("Retrieves heart rate data from the Oura Ring.")]
     public async Task<string> GetHeartRate(
         [Description("Start date in yyyy-MM-dd format. Defaults to 7 days ago if not specified.")] string? startDate = null,
         [Description("End date in yyyy-MM-dd format. Defaults to today if not specified.")] string? endDate = null,
@@ -21,7 +21,7 @@ public class BodyTools(IOuraApiClient client)
         return JsonSerializer.Serialize(result);
     }
 
-    [McpServerTool, Description("Retrieves heart rate variability data from the Oura Ring.")]
+    [McpServerTool(Name = "get_heart_rate_variability"), Description("Retrieves heart rate variability data from the Oura Ring.")]
     public async Task<string> GetHeartRateVariability(
         [Description("Start date in yyyy-MM-dd format. Defaults to 7 days ago if not specified.")] string? startDate = null,
         [Description("End date in yyyy-MM-dd format. Defaults to today if not specified.")] string? endDate = null,
@@ -34,7 +34,7 @@ public class BodyTools(IOuraApiClient client)
         return JsonSerializer.Serialize(result);
     }
 
-    [McpServerTool, Description("Retrieves daily SpO2 blood oxygen data from the Oura Ring.")]
+    [McpServerTool(Name = "get_daily_spo2"), Description("Retrieves daily SpO2 blood oxygen data from the Oura Ring.")]
     public async Task<string> GetDailySpo2(
         [Description("Start date in yyyy-MM-dd format. Defaults to 7 days ago if not specified.")] string? startDate = null,
         [Description("End date in yyyy-MM-dd format. Defaults to today if not specified.")] string? endDate = null,
@@ -47,7 +47,7 @@ public class BodyTools(IOuraApiClient client)
         return JsonSerializer.Serialize(result);
     }
 
-    [McpServerTool, Description("Retrieves VO2 max estimates from the Oura Ring.")]
+    [McpServerTool(Name = "get_vo2_max"), Description("Retrieves VO2 max estimates from the Oura Ring.")]
     public async Task<string> GetVo2Max(
         [Description("Start date in yyyy-MM-dd format. Defaults to 7 days ago if not specified.")] string? startDate = null,
         [Description("End date in yyyy-MM-dd format. Defaults to today if not specified.")] string? endDate = null,
@@ -60,7 +60,7 @@ public class BodyTools(IOuraApiClient client)
         return JsonSerializer.Serialize(result);
     }
 
-    [McpServerTool, Description("Retrieves cardiovascular age estimates from the Oura Ring.")]
+    [McpServerTool(Name = "get_cardiovascular_age"), Description("Retrieves cardiovascular age estimates from the Oura Ring.")]
     public async Task<string> GetCardiovascularAge(
         [Description("Start date in yyyy-MM-dd format. Defaults to 7 days ago if not specified.")] string? startDate = null,
         [Description("End date in yyyy-MM-dd format. Defaults to today if not specified.")] string? endDate = null,

@@ -8,7 +8,7 @@ namespace OuraMcp.Tools;
 [McpServerToolType]
 public class ActivityTools(IOuraApiClient client)
 {
-    [McpServerTool, Description("Retrieves daily activity scores and step counts from the Oura Ring.")]
+    [McpServerTool(Name = "get_daily_activity"), Description("Retrieves daily activity scores and step counts from the Oura Ring.")]
     public async Task<string> GetDailyActivity(
         [Description("Start date in yyyy-MM-dd format. Defaults to 7 days ago if not specified.")] string? startDate = null,
         [Description("End date in yyyy-MM-dd format. Defaults to today if not specified.")] string? endDate = null,
@@ -21,7 +21,7 @@ public class ActivityTools(IOuraApiClient client)
         return JsonSerializer.Serialize(result);
     }
 
-    [McpServerTool, Description("Retrieves workout data from the Oura Ring.")]
+    [McpServerTool(Name = "get_workouts"), Description("Retrieves workout data from the Oura Ring.")]
     public async Task<string> GetWorkouts(
         [Description("Start date in yyyy-MM-dd format. Defaults to 7 days ago if not specified.")] string? startDate = null,
         [Description("End date in yyyy-MM-dd format. Defaults to today if not specified.")] string? endDate = null,
@@ -34,7 +34,7 @@ public class ActivityTools(IOuraApiClient client)
         return JsonSerializer.Serialize(result);
     }
 
-    [McpServerTool, Description("Retrieves session data such as meditation and breathing exercises from the Oura Ring.")]
+    [McpServerTool(Name = "get_sessions"), Description("Retrieves session data such as meditation and breathing exercises from the Oura Ring.")]
     public async Task<string> GetSessions(
         [Description("Start date in yyyy-MM-dd format. Defaults to 7 days ago if not specified.")] string? startDate = null,
         [Description("End date in yyyy-MM-dd format. Defaults to today if not specified.")] string? endDate = null,

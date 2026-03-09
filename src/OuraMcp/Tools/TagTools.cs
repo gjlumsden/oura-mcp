@@ -8,7 +8,7 @@ namespace OuraMcp.Tools;
 [McpServerToolType]
 public class TagTools(IOuraApiClient client)
 {
-    [McpServerTool, Description("Retrieves tags from the Oura Ring.")]
+    [McpServerTool(Name = "get_tags"), Description("Retrieves tags from the Oura Ring.")]
     public async Task<string> GetTags(
         [Description("Start date in yyyy-MM-dd format. Defaults to 7 days ago if not specified.")] string? startDate = null,
         [Description("End date in yyyy-MM-dd format. Defaults to today if not specified.")] string? endDate = null,
@@ -21,7 +21,7 @@ public class TagTools(IOuraApiClient client)
         return JsonSerializer.Serialize(result);
     }
 
-    [McpServerTool, Description("Retrieves enhanced tags from the Oura Ring.")]
+    [McpServerTool(Name = "get_enhanced_tags"), Description("Retrieves enhanced tags from the Oura Ring.")]
     public async Task<string> GetEnhancedTags(
         [Description("Start date in yyyy-MM-dd format. Defaults to 7 days ago if not specified.")] string? startDate = null,
         [Description("End date in yyyy-MM-dd format. Defaults to today if not specified.")] string? endDate = null,

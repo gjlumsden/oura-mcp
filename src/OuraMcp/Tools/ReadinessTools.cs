@@ -8,7 +8,7 @@ namespace OuraMcp.Tools;
 [McpServerToolType]
 public class ReadinessTools(IOuraApiClient client)
 {
-    [McpServerTool, Description("Retrieves daily readiness scores from the Oura Ring.")]
+    [McpServerTool(Name = "get_daily_readiness"), Description("Retrieves daily readiness scores from the Oura Ring.")]
     public async Task<string> GetDailyReadiness(
         [Description("Start date in yyyy-MM-dd format. Defaults to 7 days ago if not specified.")] string? startDate = null,
         [Description("End date in yyyy-MM-dd format. Defaults to today if not specified.")] string? endDate = null,

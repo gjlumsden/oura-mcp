@@ -8,7 +8,7 @@ namespace OuraMcp.Tools;
 [McpServerToolType]
 public class ProfileTools(IOuraApiClient client)
 {
-    [McpServerTool, Description("Retrieves personal info from the Oura Ring account.")]
+    [McpServerTool(Name = "get_personal_info"), Description("Retrieves personal info from the Oura Ring account.")]
     public async Task<string> GetPersonalInfo(CancellationToken cancellationToken = default)
     {
         var result = await client.GetPersonalInfoAsync(cancellationToken);
@@ -16,7 +16,7 @@ public class ProfileTools(IOuraApiClient client)
         return JsonSerializer.Serialize(result);
     }
 
-    [McpServerTool, Description("Retrieves ring configuration details from the Oura Ring.")]
+    [McpServerTool(Name = "get_ring_configuration"), Description("Retrieves ring configuration details from the Oura Ring.")]
     public async Task<string> GetRingConfiguration(CancellationToken cancellationToken = default)
     {
         var result = await client.GetRingConfigurationAsync(cancellationToken);

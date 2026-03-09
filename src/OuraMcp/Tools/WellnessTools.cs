@@ -8,7 +8,7 @@ namespace OuraMcp.Tools;
 [McpServerToolType]
 public class WellnessTools(IOuraApiClient client)
 {
-    [McpServerTool, Description("Retrieves daily stress data from the Oura Ring.")]
+    [McpServerTool(Name = "get_daily_stress"), Description("Retrieves daily stress data from the Oura Ring.")]
     public async Task<string> GetDailyStress(
         [Description("Start date in yyyy-MM-dd format. Defaults to 7 days ago if not specified.")] string? startDate = null,
         [Description("End date in yyyy-MM-dd format. Defaults to today if not specified.")] string? endDate = null,
@@ -21,7 +21,7 @@ public class WellnessTools(IOuraApiClient client)
         return JsonSerializer.Serialize(result);
     }
 
-    [McpServerTool, Description("Retrieves daily resilience data from the Oura Ring.")]
+    [McpServerTool(Name = "get_daily_resilience"), Description("Retrieves daily resilience data from the Oura Ring.")]
     public async Task<string> GetDailyResilience(
         [Description("Start date in yyyy-MM-dd format. Defaults to 7 days ago if not specified.")] string? startDate = null,
         [Description("End date in yyyy-MM-dd format. Defaults to today if not specified.")] string? endDate = null,
@@ -34,7 +34,7 @@ public class WellnessTools(IOuraApiClient client)
         return JsonSerializer.Serialize(result);
     }
 
-    [McpServerTool, Description("Retrieves rest mode period data from the Oura Ring.")]
+    [McpServerTool(Name = "get_rest_mode_periods"), Description("Retrieves rest mode period data from the Oura Ring.")]
     public async Task<string> GetRestModePeriods(
         [Description("Start date in yyyy-MM-dd format. Defaults to 7 days ago if not specified.")] string? startDate = null,
         [Description("End date in yyyy-MM-dd format. Defaults to today if not specified.")] string? endDate = null,
