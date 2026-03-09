@@ -37,3 +37,9 @@ app.MapOAuthEndpoints();
 app.MapMcp("/mcp");
 
 app.Run();
+
+/// <summary>
+/// Partial class declaration to make the entry point accessible
+/// for integration tests using <see cref="Microsoft.AspNetCore.Mvc.Testing.WebApplicationFactory{TEntryPoint}"/>.
+/// </summary>
+public partial class Program { }
