@@ -26,14 +26,14 @@ public class ProfileToolsTests
             Age = 30
         };
         _mockClient
-            .Setup(c => c.GetPersonalInfoAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(c => c.GetPersonalInfoAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(expected);
 
         var result = await _sut.GetPersonalInfo();
 
         result.Should().NotBeNullOrEmpty();
         _mockClient.Verify(
-            c => c.GetPersonalInfoAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            c => c.GetPersonalInfoAsync(It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -47,14 +47,14 @@ public class ProfileToolsTests
             Size = 10
         };
         _mockClient
-            .Setup(c => c.GetRingConfigurationAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(c => c.GetRingConfigurationAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(expected);
 
         var result = await _sut.GetRingConfiguration();
 
         result.Should().NotBeNullOrEmpty();
         _mockClient.Verify(
-            c => c.GetRingConfigurationAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            c => c.GetRingConfigurationAsync(It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -62,7 +62,7 @@ public class ProfileToolsTests
     public async Task GetPersonalInfo_ApiThrows_PropagatesError()
     {
         _mockClient
-            .Setup(c => c.GetPersonalInfoAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(c => c.GetPersonalInfoAsync(It.IsAny<CancellationToken>()))
             .ThrowsAsync(new HttpRequestException("Unauthorized"));
 
         var act = () => _sut.GetPersonalInfo();

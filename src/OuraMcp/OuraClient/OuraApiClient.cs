@@ -28,78 +28,79 @@ public class OuraApiClient : IOuraApiClient
 
     // ── Single-object endpoints ──────────────────────────────────────
 
-    public Task<PersonalInfo> GetPersonalInfoAsync(string mcpToken = "", CancellationToken ct = default)
-        => GetSingleAsync<PersonalInfo>("v2/usercollection/personal_info", mcpToken, ct);
+    public Task<PersonalInfo> GetPersonalInfoAsync(CancellationToken ct = default)
+        => GetSingleAsync<PersonalInfo>("v2/usercollection/personal_info", ct);
 
-    public Task<RingConfiguration> GetRingConfigurationAsync(string mcpToken = "", CancellationToken ct = default)
-        => GetSingleAsync<RingConfiguration>("v2/usercollection/ring_configuration", mcpToken, ct);
+    public Task<RingConfiguration> GetRingConfigurationAsync(CancellationToken ct = default)
+        => GetSingleAsync<RingConfiguration>("v2/usercollection/ring_configuration", ct);
 
     // ── Collection endpoints ─────────────────────────────────────────
 
-    public Task<IReadOnlyList<DailySleep>> GetDailySleepAsync(DateOnly? startDate = null, DateOnly? endDate = null, string mcpToken = "", CancellationToken ct = default)
-        => GetCollectionAsync<DailySleep>("v2/usercollection/daily_sleep", startDate, endDate, mcpToken, ct);
+    public Task<IReadOnlyList<DailySleep>> GetDailySleepAsync(DateOnly? startDate = null, DateOnly? endDate = null, CancellationToken ct = default)
+        => GetCollectionAsync<DailySleep>("v2/usercollection/daily_sleep", startDate, endDate, ct);
 
-    public Task<IReadOnlyList<DailyActivity>> GetDailyActivityAsync(DateOnly? startDate = null, DateOnly? endDate = null, string mcpToken = "", CancellationToken ct = default)
-        => GetCollectionAsync<DailyActivity>("v2/usercollection/daily_activity", startDate, endDate, mcpToken, ct);
+    public Task<IReadOnlyList<DailyActivity>> GetDailyActivityAsync(DateOnly? startDate = null, DateOnly? endDate = null, CancellationToken ct = default)
+        => GetCollectionAsync<DailyActivity>("v2/usercollection/daily_activity", startDate, endDate, ct);
 
-    public Task<IReadOnlyList<DailyReadiness>> GetDailyReadinessAsync(DateOnly? startDate = null, DateOnly? endDate = null, string mcpToken = "", CancellationToken ct = default)
-        => GetCollectionAsync<DailyReadiness>("v2/usercollection/daily_readiness", startDate, endDate, mcpToken, ct);
+    public Task<IReadOnlyList<DailyReadiness>> GetDailyReadinessAsync(DateOnly? startDate = null, DateOnly? endDate = null, CancellationToken ct = default)
+        => GetCollectionAsync<DailyReadiness>("v2/usercollection/daily_readiness", startDate, endDate, ct);
 
-    public Task<IReadOnlyList<DailyStress>> GetDailyStressAsync(DateOnly? startDate = null, DateOnly? endDate = null, string mcpToken = "", CancellationToken ct = default)
-        => GetCollectionAsync<DailyStress>("v2/usercollection/daily_stress", startDate, endDate, mcpToken, ct);
+    public Task<IReadOnlyList<DailyStress>> GetDailyStressAsync(DateOnly? startDate = null, DateOnly? endDate = null, CancellationToken ct = default)
+        => GetCollectionAsync<DailyStress>("v2/usercollection/daily_stress", startDate, endDate, ct);
 
-    public Task<IReadOnlyList<DailyResilience>> GetDailyResilienceAsync(DateOnly? startDate = null, DateOnly? endDate = null, string mcpToken = "", CancellationToken ct = default)
-        => GetCollectionAsync<DailyResilience>("v2/usercollection/daily_resilience", startDate, endDate, mcpToken, ct);
+    public Task<IReadOnlyList<DailyResilience>> GetDailyResilienceAsync(DateOnly? startDate = null, DateOnly? endDate = null, CancellationToken ct = default)
+        => GetCollectionAsync<DailyResilience>("v2/usercollection/daily_resilience", startDate, endDate, ct);
 
-    public Task<IReadOnlyList<SleepPeriod>> GetSleepPeriodsAsync(DateOnly? startDate = null, DateOnly? endDate = null, string mcpToken = "", CancellationToken ct = default)
-        => GetCollectionAsync<SleepPeriod>("v2/usercollection/sleep", startDate, endDate, mcpToken, ct);
+    public Task<IReadOnlyList<SleepPeriod>> GetSleepPeriodsAsync(DateOnly? startDate = null, DateOnly? endDate = null, CancellationToken ct = default)
+        => GetCollectionAsync<SleepPeriod>("v2/usercollection/sleep", startDate, endDate, ct);
 
-    public Task<IReadOnlyList<SleepTime>> GetSleepTimeAsync(DateOnly? startDate = null, DateOnly? endDate = null, string mcpToken = "", CancellationToken ct = default)
-        => GetCollectionAsync<SleepTime>("v2/usercollection/sleep_time", startDate, endDate, mcpToken, ct);
+    public Task<IReadOnlyList<SleepTime>> GetSleepTimeAsync(DateOnly? startDate = null, DateOnly? endDate = null, CancellationToken ct = default)
+        => GetCollectionAsync<SleepTime>("v2/usercollection/sleep_time", startDate, endDate, ct);
 
-    public Task<IReadOnlyList<Workout>> GetWorkoutsAsync(DateOnly? startDate = null, DateOnly? endDate = null, string mcpToken = "", CancellationToken ct = default)
-        => GetCollectionAsync<Workout>("v2/usercollection/workout", startDate, endDate, mcpToken, ct);
+    public Task<IReadOnlyList<Workout>> GetWorkoutsAsync(DateOnly? startDate = null, DateOnly? endDate = null, CancellationToken ct = default)
+        => GetCollectionAsync<Workout>("v2/usercollection/workout", startDate, endDate, ct);
 
-    public Task<IReadOnlyList<Session>> GetSessionsAsync(DateOnly? startDate = null, DateOnly? endDate = null, string mcpToken = "", CancellationToken ct = default)
-        => GetCollectionAsync<Session>("v2/usercollection/session", startDate, endDate, mcpToken, ct);
+    public Task<IReadOnlyList<Session>> GetSessionsAsync(DateOnly? startDate = null, DateOnly? endDate = null, CancellationToken ct = default)
+        => GetCollectionAsync<Session>("v2/usercollection/session", startDate, endDate, ct);
 
-    public Task<IReadOnlyList<HeartRate>> GetHeartRateAsync(DateOnly? startDate = null, DateOnly? endDate = null, string mcpToken = "", CancellationToken ct = default)
-        => GetCollectionAsync<HeartRate>("v2/usercollection/heartrate", startDate, endDate, mcpToken, ct);
+    public Task<IReadOnlyList<HeartRate>> GetHeartRateAsync(DateOnly? startDate = null, DateOnly? endDate = null, CancellationToken ct = default)
+        => GetCollectionAsync<HeartRate>("v2/usercollection/heartrate", startDate, endDate, ct);
 
-    public Task<IReadOnlyList<HeartRateVariability>> GetHeartRateVariabilityAsync(DateOnly? startDate = null, DateOnly? endDate = null, string mcpToken = "", CancellationToken ct = default)
-        => GetCollectionAsync<HeartRateVariability>("v2/usercollection/heart_rate_variability", startDate, endDate, mcpToken, ct);
+    public Task<IReadOnlyList<HeartRateVariability>> GetHeartRateVariabilityAsync(DateOnly? startDate = null, DateOnly? endDate = null, CancellationToken ct = default)
+        => GetCollectionAsync<HeartRateVariability>("v2/usercollection/heart_rate_variability", startDate, endDate, ct);
 
-    public Task<IReadOnlyList<DailySpo2>> GetDailySpo2Async(DateOnly? startDate = null, DateOnly? endDate = null, string mcpToken = "", CancellationToken ct = default)
-        => GetCollectionAsync<DailySpo2>("v2/usercollection/daily_spo2", startDate, endDate, mcpToken, ct);
+    public Task<IReadOnlyList<DailySpo2>> GetDailySpo2Async(DateOnly? startDate = null, DateOnly? endDate = null, CancellationToken ct = default)
+        => GetCollectionAsync<DailySpo2>("v2/usercollection/daily_spo2", startDate, endDate, ct);
 
-    public Task<IReadOnlyList<Vo2Max>> GetVo2MaxAsync(DateOnly? startDate = null, DateOnly? endDate = null, string mcpToken = "", CancellationToken ct = default)
-        => GetCollectionAsync<Vo2Max>("v2/usercollection/vo2_max", startDate, endDate, mcpToken, ct);
+    public Task<IReadOnlyList<Vo2Max>> GetVo2MaxAsync(DateOnly? startDate = null, DateOnly? endDate = null, CancellationToken ct = default)
+        => GetCollectionAsync<Vo2Max>("v2/usercollection/vo2_max", startDate, endDate, ct);
 
-    public Task<IReadOnlyList<CardiovascularAge>> GetCardiovascularAgeAsync(DateOnly? startDate = null, DateOnly? endDate = null, string mcpToken = "", CancellationToken ct = default)
-        => GetCollectionAsync<CardiovascularAge>("v2/usercollection/daily_cardiovascular_age", startDate, endDate, mcpToken, ct);
+    public Task<IReadOnlyList<CardiovascularAge>> GetCardiovascularAgeAsync(DateOnly? startDate = null, DateOnly? endDate = null, CancellationToken ct = default)
+        => GetCollectionAsync<CardiovascularAge>("v2/usercollection/daily_cardiovascular_age", startDate, endDate, ct);
 
-    public Task<IReadOnlyList<Tag>> GetTagsAsync(DateOnly? startDate = null, DateOnly? endDate = null, string mcpToken = "", CancellationToken ct = default)
-        => GetCollectionAsync<Tag>("v2/usercollection/tag", startDate, endDate, mcpToken, ct);
+    public Task<IReadOnlyList<Tag>> GetTagsAsync(DateOnly? startDate = null, DateOnly? endDate = null, CancellationToken ct = default)
+        => GetCollectionAsync<Tag>("v2/usercollection/tag", startDate, endDate, ct);
 
-    public Task<IReadOnlyList<EnhancedTag>> GetEnhancedTagsAsync(DateOnly? startDate = null, DateOnly? endDate = null, string mcpToken = "", CancellationToken ct = default)
-        => GetCollectionAsync<EnhancedTag>("v2/usercollection/enhanced_tag", startDate, endDate, mcpToken, ct);
+    public Task<IReadOnlyList<EnhancedTag>> GetEnhancedTagsAsync(DateOnly? startDate = null, DateOnly? endDate = null, CancellationToken ct = default)
+        => GetCollectionAsync<EnhancedTag>("v2/usercollection/enhanced_tag", startDate, endDate, ct);
 
-    public Task<IReadOnlyList<RestModePeriod>> GetRestModePeriodsAsync(DateOnly? startDate = null, DateOnly? endDate = null, string mcpToken = "", CancellationToken ct = default)
-        => GetCollectionAsync<RestModePeriod>("v2/usercollection/rest_mode_period", startDate, endDate, mcpToken, ct);
+    public Task<IReadOnlyList<RestModePeriod>> GetRestModePeriodsAsync(DateOnly? startDate = null, DateOnly? endDate = null, CancellationToken ct = default)
+        => GetCollectionAsync<RestModePeriod>("v2/usercollection/rest_mode_period", startDate, endDate, ct);
 
     // ── Core request helpers ─────────────────────────────────────────
 
-    private async Task<T> GetSingleAsync<T>(string path, string mcpToken, CancellationToken ct)
+    private async Task<T> GetSingleAsync<T>(string path, CancellationToken ct)
     {
-        var response = await SendWithRetryAsync(path, mcpToken, ct);
+        var response = await SendWithRetryAsync(path, ct);
 
         var json = await response.Content.ReadAsStringAsync(ct);
+
         return JsonSerializer.Deserialize<T>(json, JsonOptions)
             ?? throw new InvalidOperationException($"Failed to deserialize response from {path}");
     }
 
     private async Task<IReadOnlyList<T>> GetCollectionAsync<T>(
-        string basePath, DateOnly? startDate, DateOnly? endDate, string mcpToken, CancellationToken ct)
+        string basePath, DateOnly? startDate, DateOnly? endDate, CancellationToken ct)
     {
         var allItems = new List<T>();
         string? nextToken = null;
@@ -107,7 +108,7 @@ public class OuraApiClient : IOuraApiClient
         do
         {
             var url = BuildCollectionUrl(basePath, startDate, endDate, nextToken);
-            var response = await SendWithRetryAsync(url, mcpToken, ct);
+            var response = await SendWithRetryAsync(url, ct);
 
             var json = await response.Content.ReadAsStringAsync(ct);
             var collection = JsonSerializer.Deserialize<OuraCollectionResponse<T>>(json, JsonOptions)
@@ -121,15 +122,15 @@ public class OuraApiClient : IOuraApiClient
         return allItems;
     }
 
-    private async Task<HttpResponseMessage> SendWithRetryAsync(string url, string mcpToken, CancellationToken ct)
+    private async Task<HttpResponseMessage> SendWithRetryAsync(string url, CancellationToken ct)
     {
-        var accessToken = await _tokenService.GetAccessTokenAsync(mcpToken, ct);
+        var accessToken = await _tokenService.GetAccessTokenAsync(ct);
         var response = await SendAuthorizedAsync(url, accessToken, ct);
 
         // 401 → re-fetch token (may trigger refresh inside token service) and retry once
         if (response.StatusCode == HttpStatusCode.Unauthorized)
         {
-            accessToken = await _tokenService.GetAccessTokenAsync(mcpToken, ct);
+            accessToken = await _tokenService.GetAccessTokenAsync(ct);
             response = await SendAuthorizedAsync(url, accessToken, ct);
         }
 
@@ -149,6 +150,7 @@ public class OuraApiClient : IOuraApiClient
         }
 
         response.EnsureSuccessStatusCode();
+
         return response;
     }
 
@@ -157,6 +159,7 @@ public class OuraApiClient : IOuraApiClient
         var client = _httpClientFactory.CreateClient("OuraApi");
         var request = new HttpRequestMessage(HttpMethod.Get, url);
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
         return await client.SendAsync(request, ct);
     }
 

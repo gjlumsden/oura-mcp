@@ -1,10 +1,14 @@
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using ModelContextProtocol.Server;
 using OuraMcp.Auth;
 using OuraMcp.OuraClient;
-using ModelContextProtocol.AspNetCore;
 
-var builder = WebApplication.CreateBuilder(args);
+var builder = Host.CreateApplicationBuilder(args);
 
-// Logging: route console output to stderr so it doesn't interfere with MCP transport
+// Logging: route console output to stderr so it doesn't interfere with stdio transport
 builder.Logging.AddConsole(options =>
     options.LogToStandardErrorThreshold = LogLevel.Trace);
 
@@ -23,23 +27,29 @@ builder.Services.AddHttpClient("OuraApi", c => c.BaseAddress = new Uri("https://
 builder.Services.AddHttpClient("OuraAuth", c => c.BaseAddress = new Uri("https://api.ouraring.com"));
 
 // Services
+builder.Services.AddSingleton<IOuraTokenStore, FileTokenStore>();
 builder.Services.AddSingleton<IOuraTokenService, OuraTokenService>();
 builder.Services.AddScoped<IOuraApiClient, OuraApiClient>();
 
-// MCP Server
+// MCP Server (stdio transport)
 builder.Services.AddMcpServer()
-    .WithHttpTransport()
+    .WithStdioServerTransport()
     .WithToolsFromAssembly();
 
-var app = builder.Build();
+// Handle CLI login command — build the host to resolve DI services, then run the login flow
+if (args.Contains("login"))
+{
+    var host = builder.Build();
+    var options = host.Services.GetRequiredService<IOptions<OuraOAuthOptions>>().Value;
+    var tokenService = host.Services.GetRequiredService<IOuraTokenService>();
+    await OuraLoginCommand.RunAsync(options, tokenService);
 
-app.MapOAuthEndpoints();
-app.MapMcp("/mcp");
+    return;
+}
 
-app.Run();
+await builder.Build().RunAsync();
 
 /// <summary>
-/// Partial class declaration to make the entry point accessible
-/// for integration tests using <see cref="Microsoft.AspNetCore.Mvc.Testing.WebApplicationFactory{TEntryPoint}"/>.
+/// Partial class declaration to make the entry point accessible for integration tests.
 /// </summary>
 public partial class Program { }

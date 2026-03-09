@@ -12,7 +12,6 @@ namespace OuraMcp.Tests.OuraClient;
 public class OuraApiClientTests
 {
     private const string FakeToken = "fake-access-token";
-    private const string FakeMcpToken = "fake-mcp-token";
 
     private readonly Mock<IHttpClientFactory> _httpClientFactory = new();
     private readonly Mock<IOuraTokenService> _tokenService = new();
@@ -29,7 +28,7 @@ public class OuraApiClientTests
             .Returns(httpClient);
 
         _tokenService
-            .Setup(t => t.GetAccessTokenAsync(FakeMcpToken, It.IsAny<CancellationToken>()))
+            .Setup(t => t.GetAccessTokenAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(FakeToken);
 
         return new OuraApiClient(_httpClientFactory.Object, _tokenService.Object);
@@ -95,7 +94,7 @@ public class OuraApiClientTests
         SetupHttpResponse(HttpStatusCode.OK, json);
         var client = CreateClient();
 
-        var result = await client.GetDailySleepAsync(mcpToken: FakeMcpToken);
+        var result = await client.GetDailySleepAsync();
 
         result.Should().HaveCount(1);
         result[0].Id.Should().Be("sleep-1");
@@ -114,7 +113,7 @@ public class OuraApiClientTests
         var startDate = new DateOnly(2024, 1, 1);
         var endDate = new DateOnly(2024, 1, 31);
 
-        await client.GetDailySleepAsync(startDate, endDate, mcpToken: FakeMcpToken);
+        await client.GetDailySleepAsync(startDate, endDate);
 
         _httpHandler.Protected().Verify(
             "SendAsync",
@@ -150,7 +149,7 @@ public class OuraApiClientTests
             (HttpStatusCode.OK, page2Json));
         var client = CreateClient();
 
-        var result = await client.GetDailySleepAsync(mcpToken: FakeMcpToken);
+        var result = await client.GetDailySleepAsync();
 
         result.Should().HaveCount(2);
         result[0].Id.Should().Be("sleep-1");
@@ -166,7 +165,7 @@ public class OuraApiClientTests
         SetupHttpResponse(HttpStatusCode.OK, json);
         var client = CreateClient();
 
-        var result = await client.GetPersonalInfoAsync(mcpToken: FakeMcpToken);
+        var result = await client.GetPersonalInfoAsync();
 
         result.Should().NotBeNull();
         result.Id.Should().Be("abc");
@@ -187,13 +186,9 @@ public class OuraApiClientTests
             (HttpStatusCode.Unauthorized, unauthorizedJson),
             (HttpStatusCode.OK, successJson));
 
-        _tokenService
-            .Setup(t => t.GetAccessTokenAsync(FakeMcpToken, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(FakeToken);
-
         var client = CreateClient();
 
-        var result = await client.GetPersonalInfoAsync(mcpToken: FakeMcpToken);
+        var result = await client.GetPersonalInfoAsync();
 
         result.Should().NotBeNull();
         result.Id.Should().Be("abc");
@@ -233,7 +228,7 @@ public class OuraApiClientTests
 
         var client = CreateClient();
 
-        var result = await client.GetPersonalInfoAsync(mcpToken: FakeMcpToken);
+        var result = await client.GetPersonalInfoAsync();
 
         result.Should().NotBeNull();
         result.Id.Should().Be("abc");
@@ -246,7 +241,7 @@ public class OuraApiClientTests
         SetupHttpResponse(HttpStatusCode.Forbidden, forbiddenJson);
         var client = CreateClient();
 
-        var act = () => client.GetPersonalInfoAsync(mcpToken: FakeMcpToken);
+        var act = () => client.GetPersonalInfoAsync();
 
         await act.Should().ThrowAsync<HttpRequestException>()
             .Where(e => e.Message.Contains("403") || e.Message.Contains("Forbidden") || e.Message.Contains("Subscription"));
@@ -261,7 +256,7 @@ public class OuraApiClientTests
         SetupHttpResponse(HttpStatusCode.OK, json);
         var client = CreateClient();
 
-        await client.GetPersonalInfoAsync(mcpToken: FakeMcpToken);
+        await client.GetPersonalInfoAsync();
 
         _httpHandler.Protected().Verify(
             "SendAsync",

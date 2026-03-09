@@ -24,14 +24,14 @@ public class ReadinessToolsTests
             new() { Id = "readiness-1", Day = new DateOnly(2025, 1, 15), Score = 78 }
         };
         _mockClient
-            .Setup(c => c.GetDailyReadinessAsync(It.IsAny<DateOnly?>(), It.IsAny<DateOnly?>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(c => c.GetDailyReadinessAsync(It.IsAny<DateOnly?>(), It.IsAny<DateOnly?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(expected);
 
         var result = await _sut.GetDailyReadiness(null, null);
 
         result.Should().NotBeNullOrEmpty();
         _mockClient.Verify(
-            c => c.GetDailyReadinessAsync(null, null, It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            c => c.GetDailyReadinessAsync(null, null, It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -43,14 +43,14 @@ public class ReadinessToolsTests
 
         _mockClient
             .Setup(c => c.GetDailyReadinessAsync(
-                new DateOnly(2025, 3, 1), new DateOnly(2025, 3, 31), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                new DateOnly(2025, 3, 1), new DateOnly(2025, 3, 31), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<DailyReadiness>());
 
         await _sut.GetDailyReadiness(startDate, endDate);
 
         _mockClient.Verify(
             c => c.GetDailyReadinessAsync(
-                new DateOnly(2025, 3, 1), new DateOnly(2025, 3, 31), It.IsAny<string>(), It.IsAny<CancellationToken>()),
+                new DateOnly(2025, 3, 1), new DateOnly(2025, 3, 31), It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -58,7 +58,7 @@ public class ReadinessToolsTests
     public async Task GetDailyReadiness_ApiThrows_PropagatesError()
     {
         _mockClient
-            .Setup(c => c.GetDailyReadinessAsync(It.IsAny<DateOnly?>(), It.IsAny<DateOnly?>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(c => c.GetDailyReadinessAsync(It.IsAny<DateOnly?>(), It.IsAny<DateOnly?>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new HttpRequestException("Service unavailable"));
 
         var act = () => _sut.GetDailyReadiness(null, null);

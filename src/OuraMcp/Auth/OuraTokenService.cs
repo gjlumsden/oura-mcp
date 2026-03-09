@@ -1,4 +1,3 @@
-using System.Collections.Concurrent;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.Extensions.Options;
@@ -6,23 +5,43 @@ using Microsoft.Extensions.Options;
 namespace OuraMcp.Auth;
 
 /// <summary>
-/// Manages OAuth2 token lifecycle: exchange, storage, refresh, and revocation.
-/// Maps opaque MCP tokens to Oura API access/refresh tokens.
+/// Manages the OAuth2 token lifecycle for a single local user.
+/// Tokens are persisted via <see cref="IOuraTokenStore"/> and refreshed automatically when expired.
 /// </summary>
 public class OuraTokenService : IOuraTokenService
 {
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly OuraOAuthOptions _options;
-    private readonly ConcurrentDictionary<string, StoredToken> _tokens = new();
+    private readonly IOuraTokenStore _tokenStore;
 
-    public OuraTokenService(IHttpClientFactory httpClientFactory, IOptions<OuraOAuthOptions> options)
+    public OuraTokenService(
+        IHttpClientFactory httpClientFactory,
+        IOptions<OuraOAuthOptions> options,
+        IOuraTokenStore tokenStore)
     {
         _httpClientFactory = httpClientFactory;
         _options = options.Value;
+        _tokenStore = tokenStore;
     }
 
     /// <inheritdoc />
-    public async Task<string> ExchangeCodeAsync(string authorizationCode, CancellationToken cancellationToken = default)
+    public async Task<string> GetAccessTokenAsync(CancellationToken ct = default)
+    {
+        var stored = await _tokenStore.LoadAsync(ct)
+            ?? throw new InvalidOperationException(
+                "No Oura tokens found. Run 'oura-mcp login' to authenticate.");
+
+        if (stored.ExpiresAt <= DateTimeOffset.UtcNow)
+        {
+            stored = await RefreshAsync(stored, ct);
+            await _tokenStore.SaveAsync(stored, ct);
+        }
+
+        return stored.AccessToken;
+    }
+
+    /// <inheritdoc />
+    public async Task ExchangeAndStoreAsync(string authorizationCode, CancellationToken ct = default)
     {
         var response = await RequestTokenAsync(new Dictionary<string, string>
         {
@@ -31,41 +50,25 @@ public class OuraTokenService : IOuraTokenService
             ["client_id"] = _options.ClientId,
             ["client_secret"] = _options.ClientSecret,
             ["redirect_uri"] = _options.RedirectUri
-        }, cancellationToken);
+        }, ct);
 
-        var mcpToken = Guid.NewGuid().ToString();
-        _tokens[mcpToken] = new StoredToken(
+        var tokenData = new StoredTokenData(
             response.AccessToken,
             response.RefreshToken,
             DateTimeOffset.UtcNow.AddSeconds(response.ExpiresIn));
 
-        return mcpToken;
+        await _tokenStore.SaveAsync(tokenData, ct);
     }
 
     /// <inheritdoc />
-    public async Task<string> GetAccessTokenAsync(string mcpToken, CancellationToken cancellationToken = default)
+    public async Task<bool> HasTokensAsync(CancellationToken ct = default)
     {
-        if (!_tokens.TryGetValue(mcpToken, out var stored))
-            throw new InvalidOperationException($"Unknown MCP token: {mcpToken}");
+        var stored = await _tokenStore.LoadAsync(ct);
 
-        if (stored.ExpiresAt <= DateTimeOffset.UtcNow)
-        {
-            var refreshed = await RefreshAsync(stored, cancellationToken);
-            _tokens[mcpToken] = refreshed;
-            return refreshed.AccessToken;
-        }
-
-        return stored.AccessToken;
+        return stored is not null && stored.ExpiresAt > DateTimeOffset.UtcNow;
     }
 
-    /// <inheritdoc />
-    public Task RevokeAsync(string mcpToken, CancellationToken cancellationToken = default)
-    {
-        _tokens.TryRemove(mcpToken, out _);
-        return Task.CompletedTask;
-    }
-
-    private async Task<StoredToken> RefreshAsync(StoredToken stored, CancellationToken cancellationToken)
+    private async Task<StoredTokenData> RefreshAsync(StoredTokenData stored, CancellationToken ct)
     {
         var response = await RequestTokenAsync(new Dictionary<string, string>
         {
@@ -73,29 +76,28 @@ public class OuraTokenService : IOuraTokenService
             ["refresh_token"] = stored.RefreshToken,
             ["client_id"] = _options.ClientId,
             ["client_secret"] = _options.ClientSecret
-        }, cancellationToken);
+        }, ct);
 
-        return new StoredToken(
+        return new StoredTokenData(
             response.AccessToken,
             response.RefreshToken,
             DateTimeOffset.UtcNow.AddSeconds(response.ExpiresIn));
     }
 
     private async Task<TokenResponse> RequestTokenAsync(
-        Dictionary<string, string> formData, CancellationToken cancellationToken)
+        Dictionary<string, string> formData, CancellationToken ct)
     {
         var client = _httpClientFactory.CreateClient("OuraAuth");
         using var content = new FormUrlEncodedContent(formData);
 
-        var httpResponse = await client.PostAsync(_options.TokenUrl, content, cancellationToken);
+        var httpResponse = await client.PostAsync(_options.TokenUrl, content, ct);
         httpResponse.EnsureSuccessStatusCode();
 
-        var json = await httpResponse.Content.ReadAsStringAsync(cancellationToken);
+        var json = await httpResponse.Content.ReadAsStringAsync(ct);
+
         return JsonSerializer.Deserialize<TokenResponse>(json)
             ?? throw new InvalidOperationException("Failed to deserialize token response");
     }
-
-    private sealed record StoredToken(string AccessToken, string RefreshToken, DateTimeOffset ExpiresAt);
 
     private sealed record TokenResponse
     {

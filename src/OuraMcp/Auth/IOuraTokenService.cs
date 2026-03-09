@@ -1,30 +1,29 @@
 namespace OuraMcp.Auth;
 
 /// <summary>
-/// Manages the lifecycle of OAuth tokens for the Oura API, including exchange, retrieval, and revocation.
+/// Manages the lifecycle of Oura OAuth tokens for a single local user,
+/// including exchange, retrieval with auto-refresh, and persistence.
 /// </summary>
 public interface IOuraTokenService
 {
     /// <summary>
-    /// Exchanges an OAuth2 authorization code for an MCP access token.
+    /// Gets a valid Oura access token, refreshing automatically if expired.
+    /// </summary>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>A valid Oura Bearer access token.</returns>
+    Task<string> GetAccessTokenAsync(CancellationToken ct = default);
+
+    /// <summary>
+    /// Exchanges an authorization code for tokens and persists them to disk.
     /// </summary>
     /// <param name="authorizationCode">The authorization code from the Oura OAuth callback.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>An opaque MCP token that maps to the underlying Oura access/refresh tokens.</returns>
-    Task<string> ExchangeCodeAsync(string authorizationCode, CancellationToken cancellationToken = default);
+    /// <param name="ct">Cancellation token.</param>
+    Task ExchangeAndStoreAsync(string authorizationCode, CancellationToken ct = default);
 
     /// <summary>
-    /// Retrieves the Oura access token associated with the given MCP token.
+    /// Checks whether valid (non-expired) tokens exist in the store.
     /// </summary>
-    /// <param name="mcpToken">The opaque MCP token issued during code exchange.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>A valid Oura Bearer access token.</returns>
-    Task<string> GetAccessTokenAsync(string mcpToken, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Revokes the Oura tokens associated with the given MCP token.
-    /// </summary>
-    /// <param name="mcpToken">The opaque MCP token to revoke.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    Task RevokeAsync(string mcpToken, CancellationToken cancellationToken = default);
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns><c>true</c> if persisted tokens exist and have not expired.</returns>
+    Task<bool> HasTokensAsync(CancellationToken ct = default);
 }

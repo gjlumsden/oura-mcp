@@ -24,14 +24,14 @@ public class BodyToolsTests
             new() { Bpm = 72, Source = "awake", Timestamp = DateTimeOffset.UtcNow }
         };
         _mockClient
-            .Setup(c => c.GetHeartRateAsync(It.IsAny<DateOnly?>(), It.IsAny<DateOnly?>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(c => c.GetHeartRateAsync(It.IsAny<DateOnly?>(), It.IsAny<DateOnly?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(expected);
 
         var result = await _sut.GetHeartRate(null, null);
 
         result.Should().NotBeNullOrEmpty();
         _mockClient.Verify(
-            c => c.GetHeartRateAsync(null, null, It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            c => c.GetHeartRateAsync(null, null, It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -43,14 +43,14 @@ public class BodyToolsTests
             new() { Id = "hrv-1", Day = new DateOnly(2025, 1, 15) }
         };
         _mockClient
-            .Setup(c => c.GetHeartRateVariabilityAsync(It.IsAny<DateOnly?>(), It.IsAny<DateOnly?>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(c => c.GetHeartRateVariabilityAsync(It.IsAny<DateOnly?>(), It.IsAny<DateOnly?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(expected);
 
         var result = await _sut.GetHeartRateVariability(null, null);
 
         result.Should().NotBeNullOrEmpty();
         _mockClient.Verify(
-            c => c.GetHeartRateVariabilityAsync(null, null, It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            c => c.GetHeartRateVariabilityAsync(null, null, It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -62,14 +62,14 @@ public class BodyToolsTests
             new() { Id = "spo2-1", Day = new DateOnly(2025, 1, 15) }
         };
         _mockClient
-            .Setup(c => c.GetDailySpo2Async(It.IsAny<DateOnly?>(), It.IsAny<DateOnly?>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(c => c.GetDailySpo2Async(It.IsAny<DateOnly?>(), It.IsAny<DateOnly?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(expected);
 
         var result = await _sut.GetDailySpo2(null, null);
 
         result.Should().NotBeNullOrEmpty();
         _mockClient.Verify(
-            c => c.GetDailySpo2Async(null, null, It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            c => c.GetDailySpo2Async(null, null, It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -81,14 +81,14 @@ public class BodyToolsTests
             new() { Id = "vo2-1", Day = new DateOnly(2025, 1, 15) }
         };
         _mockClient
-            .Setup(c => c.GetVo2MaxAsync(It.IsAny<DateOnly?>(), It.IsAny<DateOnly?>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(c => c.GetVo2MaxAsync(It.IsAny<DateOnly?>(), It.IsAny<DateOnly?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(expected);
 
         var result = await _sut.GetVo2Max(null, null);
 
         result.Should().NotBeNullOrEmpty();
         _mockClient.Verify(
-            c => c.GetVo2MaxAsync(null, null, It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            c => c.GetVo2MaxAsync(null, null, It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -100,14 +100,14 @@ public class BodyToolsTests
             new() { Day = new DateOnly(2025, 1, 15), VascularAge = 32 }
         };
         _mockClient
-            .Setup(c => c.GetCardiovascularAgeAsync(It.IsAny<DateOnly?>(), It.IsAny<DateOnly?>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(c => c.GetCardiovascularAgeAsync(It.IsAny<DateOnly?>(), It.IsAny<DateOnly?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(expected);
 
         var result = await _sut.GetCardiovascularAge(null, null);
 
         result.Should().NotBeNullOrEmpty();
         _mockClient.Verify(
-            c => c.GetCardiovascularAgeAsync(null, null, It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            c => c.GetCardiovascularAgeAsync(null, null, It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -119,14 +119,14 @@ public class BodyToolsTests
 
         _mockClient
             .Setup(c => c.GetHeartRateAsync(
-                new DateOnly(2025, 4, 1), new DateOnly(2025, 4, 30), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                new DateOnly(2025, 4, 1), new DateOnly(2025, 4, 30), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<HeartRate>());
 
         await _sut.GetHeartRate(startDate, endDate);
 
         _mockClient.Verify(
             c => c.GetHeartRateAsync(
-                new DateOnly(2025, 4, 1), new DateOnly(2025, 4, 30), It.IsAny<string>(), It.IsAny<CancellationToken>()),
+                new DateOnly(2025, 4, 1), new DateOnly(2025, 4, 30), It.IsAny<CancellationToken>()),
             Times.Once);
     }
 }

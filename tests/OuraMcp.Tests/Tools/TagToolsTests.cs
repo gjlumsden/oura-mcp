@@ -24,14 +24,14 @@ public class TagToolsTests
             new() { Id = "tag-1", Day = new DateOnly(2025, 1, 15), Text = "feeling great" }
         };
         _mockClient
-            .Setup(c => c.GetTagsAsync(It.IsAny<DateOnly?>(), It.IsAny<DateOnly?>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(c => c.GetTagsAsync(It.IsAny<DateOnly?>(), It.IsAny<DateOnly?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(expected);
 
         var result = await _sut.GetTags(null, null);
 
         result.Should().NotBeNullOrEmpty();
         _mockClient.Verify(
-            c => c.GetTagsAsync(null, null, It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            c => c.GetTagsAsync(null, null, It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -43,14 +43,14 @@ public class TagToolsTests
             new() { Id = "etag-1" }
         };
         _mockClient
-            .Setup(c => c.GetEnhancedTagsAsync(It.IsAny<DateOnly?>(), It.IsAny<DateOnly?>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(c => c.GetEnhancedTagsAsync(It.IsAny<DateOnly?>(), It.IsAny<DateOnly?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(expected);
 
         var result = await _sut.GetEnhancedTags(null, null);
 
         result.Should().NotBeNullOrEmpty();
         _mockClient.Verify(
-            c => c.GetEnhancedTagsAsync(null, null, It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            c => c.GetEnhancedTagsAsync(null, null, It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -62,14 +62,14 @@ public class TagToolsTests
 
         _mockClient
             .Setup(c => c.GetTagsAsync(
-                new DateOnly(2025, 6, 1), new DateOnly(2025, 6, 30), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                new DateOnly(2025, 6, 1), new DateOnly(2025, 6, 30), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<Tag>());
 
         await _sut.GetTags(startDate, endDate);
 
         _mockClient.Verify(
             c => c.GetTagsAsync(
-                new DateOnly(2025, 6, 1), new DateOnly(2025, 6, 30), It.IsAny<string>(), It.IsAny<CancellationToken>()),
+                new DateOnly(2025, 6, 1), new DateOnly(2025, 6, 30), It.IsAny<CancellationToken>()),
             Times.Once);
     }
 }

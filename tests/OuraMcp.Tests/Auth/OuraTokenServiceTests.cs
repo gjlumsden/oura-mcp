@@ -8,11 +8,12 @@ using OuraMcp.Auth;
 
 namespace OuraMcp.Tests.Auth;
 
-public class OuraTokenServiceTests : IDisposable
+public class OuraTokenServiceTests
 {
     private readonly OuraOAuthOptions _options;
     private readonly Mock<HttpMessageHandler> _handler;
     private readonly Mock<IHttpClientFactory> _factory;
+    private readonly Mock<IOuraTokenStore> _store;
 
     public OuraTokenServiceTests()
     {
@@ -26,6 +27,7 @@ public class OuraTokenServiceTests : IDisposable
 
         _handler = new Mock<HttpMessageHandler>();
         _factory = new Mock<IHttpClientFactory>();
+        _store = new Mock<IOuraTokenStore>();
 
         var client = new HttpClient(_handler.Object)
         {
@@ -34,13 +36,8 @@ public class OuraTokenServiceTests : IDisposable
         _factory.Setup(f => f.CreateClient("OuraAuth")).Returns(client);
     }
 
-    public void Dispose()
-    {
-        GC.SuppressFinalize(this);
-    }
-
     private OuraTokenService CreateService() =>
-        new OuraTokenService(_factory.Object, Options.Create(_options));
+        new(_factory.Object, Options.Create(_options), _store.Object);
 
     private void SetupTokenResponse(HttpStatusCode statusCode, string jsonResponse)
     {
@@ -72,103 +69,32 @@ public class OuraTokenServiceTests : IDisposable
         }
     }
 
-    #region ExchangeCodeAsync
-
-    [Fact]
-    public async Task ExchangeCodeAsync_ValidCode_ReturnsToken()
-    {
-        // Arrange
-        const string tokenResponse = """
-            {
-                "access_token": "abc",
-                "refresh_token": "def",
-                "expires_in": 86400,
-                "token_type": "bearer"
-            }
-            """;
-        SetupTokenResponse(HttpStatusCode.OK, tokenResponse);
-        var service = CreateService();
-
-        // Act
-        var mcpToken = await service.ExchangeCodeAsync("valid-auth-code");
-
-        // Assert
-        mcpToken.Should().NotBeNullOrEmpty("a valid code exchange should return an MCP token");
-    }
-
-    [Fact]
-    public async Task ExchangeCodeAsync_InvalidCode_ThrowsException()
-    {
-        // Arrange
-        const string errorResponse = """{"error":"invalid_grant"}""";
-        SetupTokenResponse(HttpStatusCode.BadRequest, errorResponse);
-        var service = CreateService();
-
-        // Act
-        var act = () => service.ExchangeCodeAsync("invalid-auth-code");
-
-        // Assert
-        await act.Should().ThrowAsync<Exception>(
-            "an invalid authorization code should cause an exception");
-    }
-
-    #endregion
-
     #region GetAccessTokenAsync
 
     [Fact]
-    public async Task GetAccessTokenAsync_ValidMcpToken_ReturnsOuraToken()
+    public async Task GetAccessTokenAsync_WithValidStoredToken_ReturnsAccessToken()
     {
-        // Arrange
-        const string tokenResponse = """
-            {
-                "access_token": "oura-access-token-123",
-                "refresh_token": "oura-refresh-token-456",
-                "expires_in": 86400,
-                "token_type": "bearer"
-            }
-            """;
-        SetupTokenResponse(HttpStatusCode.OK, tokenResponse);
+        var stored = new StoredTokenData("valid-access-token", "refresh-token",
+            DateTimeOffset.UtcNow.AddHours(1));
+        _store.Setup(s => s.LoadAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(stored);
+
         var service = CreateService();
 
-        var mcpToken = await service.ExchangeCodeAsync("valid-auth-code");
+        var result = await service.GetAccessTokenAsync();
 
-        // Act
-        var accessToken = await service.GetAccessTokenAsync(mcpToken);
-
-        // Assert
-        accessToken.Should().Be("oura-access-token-123",
-            "the Oura access token from the exchange should be returned");
+        result.Should().Be("valid-access-token");
     }
 
     [Fact]
-    public async Task GetAccessTokenAsync_InvalidMcpToken_ThrowsException()
+    public async Task GetAccessTokenAsync_WithExpiredToken_RefreshesAndSaves()
     {
-        // Arrange
-        var service = CreateService();
-        var bogusToken = Guid.NewGuid().ToString();
+        var expired = new StoredTokenData("old-access", "old-refresh",
+            DateTimeOffset.UtcNow.AddSeconds(-10));
+        _store.Setup(s => s.LoadAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(expired);
 
-        // Act
-        var act = () => service.GetAccessTokenAsync(bogusToken);
-
-        // Assert
-        await act.Should().ThrowAsync<Exception>(
-            "an MCP token that was never exchanged should not resolve to an access token");
-    }
-
-    [Fact]
-    public async Task GetAccessTokenAsync_ExpiredToken_RefreshesAutomatically()
-    {
-        // Arrange — first response has a very short expiry (already expired)
-        const string initialTokenResponse = """
-            {
-                "access_token": "old-access-token",
-                "refresh_token": "original-refresh-token",
-                "expires_in": 0,
-                "token_type": "bearer"
-            }
-            """;
-        const string refreshedTokenResponse = """
+        const string refreshResponse = """
             {
                 "access_token": "new-access-token",
                 "refresh_token": "new-refresh-token",
@@ -176,26 +102,120 @@ public class OuraTokenServiceTests : IDisposable
                 "token_type": "bearer"
             }
             """;
-
-        SetupSequentialResponses(
-            (HttpStatusCode.OK, initialTokenResponse),
-            (HttpStatusCode.OK, refreshedTokenResponse));
+        SetupTokenResponse(HttpStatusCode.OK, refreshResponse);
 
         var service = CreateService();
-        var mcpToken = await service.ExchangeCodeAsync("valid-auth-code");
 
-        // Act — token is expired, should trigger a refresh
-        var accessToken = await service.GetAccessTokenAsync(mcpToken);
+        var result = await service.GetAccessTokenAsync();
 
-        // Assert
-        accessToken.Should().Be("new-access-token",
-            "an expired token should be refreshed automatically");
+        result.Should().Be("new-access-token");
+        _store.Verify(s => s.SaveAsync(
+            It.Is<StoredTokenData>(t =>
+                t.AccessToken == "new-access-token" &&
+                t.RefreshToken == "new-refresh-token"),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
 
-        _handler.Protected().Verify(
-            "SendAsync",
-            Times.Exactly(2),
-            ItExpr.IsAny<HttpRequestMessage>(),
-            ItExpr.IsAny<CancellationToken>());
+    [Fact]
+    public async Task GetAccessTokenAsync_NoStoredTokens_ThrowsInvalidOperation()
+    {
+        _store.Setup(s => s.LoadAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync((StoredTokenData?)null);
+
+        var service = CreateService();
+
+        var act = () => service.GetAccessTokenAsync();
+
+        await act.Should().ThrowAsync<InvalidOperationException>()
+            .WithMessage("*No Oura tokens found*");
+    }
+
+    #endregion
+
+    #region ExchangeAndStoreAsync
+
+    [Fact]
+    public async Task ExchangeAndStoreAsync_ValidCode_SavesTokens()
+    {
+        const string tokenResponse = """
+            {
+                "access_token": "new-access",
+                "refresh_token": "new-refresh",
+                "expires_in": 86400,
+                "token_type": "bearer"
+            }
+            """;
+        SetupTokenResponse(HttpStatusCode.OK, tokenResponse);
+
+        var service = CreateService();
+
+        await service.ExchangeAndStoreAsync("valid-auth-code");
+
+        _store.Verify(s => s.SaveAsync(
+            It.Is<StoredTokenData>(t =>
+                t.AccessToken == "new-access" &&
+                t.RefreshToken == "new-refresh"),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task ExchangeAndStoreAsync_InvalidCode_ThrowsException()
+    {
+        const string errorResponse = """{"error":"invalid_grant"}""";
+        SetupTokenResponse(HttpStatusCode.BadRequest, errorResponse);
+
+        var service = CreateService();
+
+        var act = () => service.ExchangeAndStoreAsync("invalid-auth-code");
+
+        await act.Should().ThrowAsync<HttpRequestException>();
+    }
+
+    #endregion
+
+    #region HasTokensAsync
+
+    [Fact]
+    public async Task HasTokensAsync_WithTokens_ReturnsTrue()
+    {
+        var stored = new StoredTokenData("access", "refresh",
+            DateTimeOffset.UtcNow.AddHours(1));
+        _store.Setup(s => s.LoadAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(stored);
+
+        var service = CreateService();
+
+        var result = await service.HasTokensAsync();
+
+        result.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task HasTokensAsync_NoTokens_ReturnsFalse()
+    {
+        _store.Setup(s => s.LoadAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync((StoredTokenData?)null);
+
+        var service = CreateService();
+
+        var result = await service.HasTokensAsync();
+
+        result.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task HasTokensAsync_ExpiredTokens_ReturnsFalse()
+    {
+        var expired = new StoredTokenData("access", "refresh",
+            DateTimeOffset.UtcNow.AddSeconds(-10));
+        _store.Setup(s => s.LoadAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(expired);
+
+        var service = CreateService();
+
+        var result = await service.HasTokensAsync();
+
+        result.Should().BeFalse();
     }
 
     #endregion
@@ -205,16 +225,26 @@ public class OuraTokenServiceTests : IDisposable
     [Fact]
     public async Task RefreshToken_UpdatesStoredRefreshToken()
     {
-        // Arrange — Oura refresh tokens are single-use, so after a refresh
-        // the new refresh_token must be stored for subsequent refreshes.
-        const string initialTokenResponse = """
+        // First call: expired token triggers refresh → returns second tokens (also expired)
+        // Second call: expired again → triggers another refresh → returns third tokens
+        var expired = new StoredTokenData("first-access", "first-refresh",
+            DateTimeOffset.UtcNow.AddSeconds(-10));
+
+        // LoadAsync returns the initial expired token on the first call,
+        // then the (still-expired) token saved after the first refresh on the second call.
+        var callCount = 0;
+        _store.Setup(s => s.LoadAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(() =>
             {
-                "access_token": "first-access",
-                "refresh_token": "first-refresh",
-                "expires_in": 0,
-                "token_type": "bearer"
-            }
-            """;
+                callCount++;
+                return callCount switch
+                {
+                    1 => expired,
+                    _ => new StoredTokenData("second-access", "second-refresh",
+                        DateTimeOffset.UtcNow.AddSeconds(-10))
+                };
+            });
+
         const string firstRefreshResponse = """
             {
                 "access_token": "second-access",
@@ -233,88 +263,22 @@ public class OuraTokenServiceTests : IDisposable
             """;
 
         SetupSequentialResponses(
-            (HttpStatusCode.OK, initialTokenResponse),
             (HttpStatusCode.OK, firstRefreshResponse),
             (HttpStatusCode.OK, secondRefreshResponse));
 
         var service = CreateService();
-        var mcpToken = await service.ExchangeCodeAsync("valid-auth-code");
 
-        // Act — first call refreshes (expired), second call refreshes again (still expired)
-        await service.GetAccessTokenAsync(mcpToken);
-        var finalAccessToken = await service.GetAccessTokenAsync(mcpToken);
+        await service.GetAccessTokenAsync();
+        var finalAccessToken = await service.GetAccessTokenAsync();
 
-        // Assert — proves the refresh token was updated between refreshes
         finalAccessToken.Should().Be("third-access",
             "each refresh should use the updated refresh token, not the original");
 
         _handler.Protected().Verify(
             "SendAsync",
-            Times.Exactly(3),
+            Times.Exactly(2),
             ItExpr.IsAny<HttpRequestMessage>(),
             ItExpr.IsAny<CancellationToken>());
-    }
-
-    #endregion
-
-    #region RevokeAsync
-
-    [Fact]
-    public async Task RevokeAsync_RemovesToken()
-    {
-        // Arrange
-        const string tokenResponse = """
-            {
-                "access_token": "abc",
-                "refresh_token": "def",
-                "expires_in": 86400,
-                "token_type": "bearer"
-            }
-            """;
-        SetupTokenResponse(HttpStatusCode.OK, tokenResponse);
-        var service = CreateService();
-        var mcpToken = await service.ExchangeCodeAsync("valid-auth-code");
-
-        // Act
-        await service.RevokeAsync(mcpToken);
-
-        // Assert — after revocation, the MCP token should no longer resolve
-        var act = () => service.GetAccessTokenAsync(mcpToken);
-        await act.Should().ThrowAsync<Exception>(
-            "a revoked MCP token should no longer be valid");
-    }
-
-    #endregion
-
-    #region Concurrency
-
-    [Fact]
-    public async Task ConcurrentAccess_ThreadSafe()
-    {
-        // Arrange
-        const string tokenResponse = """
-            {
-                "access_token": "concurrent-access-token",
-                "refresh_token": "concurrent-refresh-token",
-                "expires_in": 86400,
-                "token_type": "bearer"
-            }
-            """;
-        SetupTokenResponse(HttpStatusCode.OK, tokenResponse);
-        var service = CreateService();
-        var mcpToken = await service.ExchangeCodeAsync("valid-auth-code");
-
-        // Act — fire many concurrent reads
-        const int concurrency = 50;
-        var tasks = Enumerable.Range(0, concurrency)
-            .Select(_ => service.GetAccessTokenAsync(mcpToken))
-            .ToArray();
-
-        var results = await Task.WhenAll(tasks);
-
-        // Assert — all should succeed and return the same access token
-        results.Should().AllBe("concurrent-access-token",
-            "all concurrent requests should return the same valid access token");
     }
 
     #endregion
