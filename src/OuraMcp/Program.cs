@@ -42,7 +42,14 @@ if (args.Contains("login"))
     var host = builder.Build();
     var options = host.Services.GetRequiredService<IOptions<OuraOAuthOptions>>().Value;
     var tokenService = host.Services.GetRequiredService<IOuraTokenService>();
-    await OuraLoginCommand.RunAsync(options, tokenService);
+    using var listener = new HttpCallbackListener();
+    var browser = new SystemBrowserLauncher();
+    var loginCommand = new OuraLoginCommand(options, tokenService, listener, browser);
+
+    Console.Error.WriteLine("Opening browser for Oura authorization...");
+    Console.Error.WriteLine($"If the browser doesn't open, visit: {loginCommand.BuildAuthorizeUrl()}");
+    await loginCommand.RunAsync();
+    Console.Error.WriteLine("Login successful! Tokens saved to ~/.oura-mcp/tokens.json");
 
     return;
 }

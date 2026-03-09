@@ -1,119 +1,71 @@
-using System.Net;
-
 namespace OuraMcp.Auth;
 
 /// <summary>
-/// Handles the interactive OAuth login flow: opens browser, receives callback, saves tokens.
+/// Orchestrates the interactive OAuth login flow: opens browser, receives callback, saves tokens.
+/// Dependencies are injected for testability.
 /// </summary>
-public static class OuraLoginCommand
+public class OuraLoginCommand
 {
+    private readonly OuraOAuthOptions _options;
+    private readonly IOuraTokenService _tokenService;
+    private readonly IOAuthCallbackListener _callbackListener;
+    private readonly IOuraBrowserLauncher _browserLauncher;
+
     /// <summary>
-    /// Runs the OAuth login flow: opens browser to Oura consent, listens on localhost for callback,
-    /// exchanges the authorization code for tokens, and saves them to the token store.
+    /// Initializes a new instance of <see cref="OuraLoginCommand"/>.
     /// </summary>
     /// <param name="options">OAuth configuration containing client ID, authorization URL, and scopes.</param>
     /// <param name="tokenService">Service used to exchange the authorization code and persist tokens.</param>
-    public static async Task RunAsync(OuraOAuthOptions options, IOuraTokenService tokenService)
+    /// <param name="callbackListener">Listener that receives the OAuth callback on localhost.</param>
+    /// <param name="browserLauncher">Launches the default browser for user authorization.</param>
+    public OuraLoginCommand(
+        OuraOAuthOptions options,
+        IOuraTokenService tokenService,
+        IOAuthCallbackListener callbackListener,
+        IOuraBrowserLauncher browserLauncher)
     {
-        const int port = 8742;
-        var callbackUrl = $"http://localhost:{port}/callback/";
+        _options = options;
+        _tokenService = tokenService;
+        _callbackListener = callbackListener;
+        _browserLauncher = browserLauncher;
+    }
 
-        using var listener = new HttpListener();
-        listener.Prefixes.Add(callbackUrl);
-        listener.Start();
+    /// <summary>
+    /// Runs the OAuth login flow: opens browser, waits for callback, exchanges code for tokens.
+    /// </summary>
+    /// <param name="ct">Cancellation token.</param>
+    public async Task RunAsync(CancellationToken ct = default)
+    {
+        var authorizeUrl = BuildAuthorizeUrl();
 
-        var authorizeUrl = $"{options.AuthorizationUrl}" +
-            $"?client_id={Uri.EscapeDataString(options.ClientId)}" +
-            $"&redirect_uri={Uri.EscapeDataString(callbackUrl)}" +
-            $"&response_type=code" +
-            $"&scope={Uri.EscapeDataString(options.Scopes)}" +
-            $"&state={Guid.NewGuid()}";
+        // Best-effort browser launch
+        _browserLauncher.OpenUrl(authorizeUrl);
 
-        Console.Error.WriteLine("Opening browser for Oura authorization...");
-        Console.Error.WriteLine($"If the browser doesn't open, visit: {authorizeUrl}");
-        OpenBrowser(authorizeUrl);
-
-        Console.Error.WriteLine("Waiting for authorization...");
-        var context = await listener.GetContextAsync();
-        var code = context.Request.QueryString["code"];
-        var error = context.Request.QueryString["error"];
-
-        if (!string.IsNullOrEmpty(error))
-        {
-            await RespondAsync(context, "Authorization failed. You can close this tab.");
-            listener.Stop();
-            Console.Error.WriteLine($"Authorization failed: {error}");
-
-            return;
-        }
-
-        if (string.IsNullOrEmpty(code))
-        {
-            await RespondAsync(context, "No authorization code received. You can close this tab.");
-            listener.Stop();
-            Console.Error.WriteLine("No authorization code received.");
-
-            return;
-        }
-
-        await RespondAsync(context, "Authorization successful! You can close this tab.");
-        listener.Stop();
+        var code = await _callbackListener.WaitForCallbackAsync(ct);
 
         // Temporarily override RedirectUri so the token exchange uses the local callback URL
-        var originalRedirectUri = options.RedirectUri;
-        options.RedirectUri = callbackUrl;
+        var originalRedirectUri = _options.RedirectUri;
+        _options.RedirectUri = _callbackListener.CallbackUrl;
         try
         {
-            await tokenService.ExchangeAndStoreAsync(code);
-            Console.Error.WriteLine("Login successful! Tokens saved to ~/.oura-mcp/tokens.json");
-        }
-        catch (Exception ex)
-        {
-            Console.Error.WriteLine($"Token exchange failed: {ex.Message}");
+            await _tokenService.ExchangeAndStoreAsync(code, ct);
         }
         finally
         {
-            options.RedirectUri = originalRedirectUri;
+            _options.RedirectUri = originalRedirectUri;
         }
     }
 
     /// <summary>
-    /// Sends an HTML response to the browser after the OAuth callback.
+    /// Builds the Oura authorization URL with all required query parameters.
     /// </summary>
-    private static async Task RespondAsync(HttpListenerContext context, string message)
+    /// <returns>The fully-formed authorization URL.</returns>
+    public string BuildAuthorizeUrl()
     {
-        var html = $"<html><body><h2>{message}</h2></body></html>";
-        var buffer = System.Text.Encoding.UTF8.GetBytes(html);
-        context.Response.ContentType = "text/html";
-        context.Response.ContentLength64 = buffer.Length;
-        await context.Response.OutputStream.WriteAsync(buffer);
-        context.Response.Close();
-    }
-
-    /// <summary>
-    /// Opens the default browser to the specified URL. Best-effort; failures are silently ignored.
-    /// </summary>
-    private static void OpenBrowser(string url)
-    {
-        try
-        {
-            if (OperatingSystem.IsWindows())
-            {
-                System.Diagnostics.Process.Start(
-                    new System.Diagnostics.ProcessStartInfo(url) { UseShellExecute = true });
-            }
-            else if (OperatingSystem.IsMacOS())
-            {
-                System.Diagnostics.Process.Start("open", url);
-            }
-            else
-            {
-                System.Diagnostics.Process.Start("xdg-open", url);
-            }
-        }
-        catch
-        {
-            // Browser opening is best-effort
-        }
+        return $"{_options.AuthorizationUrl}" +
+            $"?client_id={Uri.EscapeDataString(_options.ClientId)}" +
+            $"&redirect_uri={Uri.EscapeDataString(_callbackListener.CallbackUrl)}" +
+            $"&response_type=code" +
+            $"&scope={Uri.EscapeDataString(_options.Scopes)}";
     }
 }
