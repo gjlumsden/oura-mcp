@@ -9,11 +9,15 @@ namespace OuraMcp.Tools;
 public class ReadinessTools(IOuraApiClient client)
 {
     [McpServerTool, Description("Retrieves daily readiness scores from the Oura Ring.")]
-    public async Task<string> GetDailyReadiness(string? startDate = null, string? endDate = null)
+    public async Task<string> GetDailyReadiness(
+        [Description("Start date in yyyy-MM-dd format. Defaults to 7 days ago if not specified.")] string? startDate = null,
+        [Description("End date in yyyy-MM-dd format. Defaults to today if not specified.")] string? endDate = null,
+        CancellationToken cancellationToken = default)
     {
-        var start = startDate is not null ? DateOnly.Parse(startDate) : (DateOnly?)null;
-        var end = endDate is not null ? DateOnly.Parse(endDate) : (DateOnly?)null;
-        var result = await client.GetDailyReadinessAsync(start, end);
+        var start = DateHelper.ParseDate(startDate, nameof(startDate));
+        var end = DateHelper.ParseDate(endDate, nameof(endDate));
+        var result = await client.GetDailyReadinessAsync(start, end, cancellationToken);
+
         return JsonSerializer.Serialize(result);
     }
 }

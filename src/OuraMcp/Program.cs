@@ -4,6 +4,10 @@ using ModelContextProtocol.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Logging: route console output to stderr so it doesn't interfere with MCP transport
+builder.Logging.AddConsole(options =>
+    options.LogToStandardErrorThreshold = LogLevel.Trace);
+
 // Configuration
 builder.Services.Configure<OuraOAuthOptions>(opts =>
 {

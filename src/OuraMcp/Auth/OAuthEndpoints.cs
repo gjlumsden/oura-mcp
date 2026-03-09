@@ -1,5 +1,5 @@
-using System.Collections.Concurrent;
 using System.Web;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 
 namespace OuraMcp.Auth;
@@ -10,8 +10,11 @@ namespace OuraMcp.Auth;
 /// </summary>
 public static class OAuthEndpoints
 {
-    // Maps state → original client redirect_uri so we can redirect back after Oura callback
-    private static readonly ConcurrentDictionary<string, string> PendingAuthorizations = new();
+    /// <summary>
+    /// Time-limited cache for pending OAuth state → redirect_uri mappings.
+    /// Entries expire after 10 minutes to prevent memory leaks from abandoned auth flows.
+    /// </summary>
+    private static readonly MemoryCache PendingAuthorizations = new(new MemoryCacheOptions());
 
     /// <summary>
     /// Registers OAuth discovery, authorization, callback, and token endpoints on the app.
@@ -58,7 +61,7 @@ public static class OAuthEndpoints
             return Results.BadRequest("state is required");
 
         // Remember the client's redirect_uri so we can redirect back in /callback
-        PendingAuthorizations[state] = clientRedirectUri;
+        PendingAuthorizations.Set(state, clientRedirectUri, TimeSpan.FromMinutes(10));
 
         var opts = options.Value;
         var serverCallbackUri = $"{context.Request.Scheme}://{context.Request.Host}/callback";
@@ -96,7 +99,15 @@ public static class OAuthEndpoints
         if (string.IsNullOrEmpty(code))
             return Results.BadRequest("Missing authorization code");
 
-        if (string.IsNullOrEmpty(state) || !PendingAuthorizations.TryRemove(state, out var clientRedirectUri))
+        if (string.IsNullOrEmpty(state) ||
+            !PendingAuthorizations.TryGetValue(state, out string? clientRedirectUri))
+        {
+            return Results.BadRequest("Invalid or expired state parameter");
+        }
+
+        PendingAuthorizations.Remove(state);
+
+        if (clientRedirectUri is null)
             return Results.BadRequest("Invalid or expired state parameter");
 
         var mcpToken = await tokenService.ExchangeCodeAsync(code, context.RequestAborted);

@@ -9,47 +9,67 @@ namespace OuraMcp.Tools;
 public class BodyTools(IOuraApiClient client)
 {
     [McpServerTool, Description("Retrieves heart rate data from the Oura Ring.")]
-    public async Task<string> GetHeartRate(string? startDate = null, string? endDate = null)
+    public async Task<string> GetHeartRate(
+        [Description("Start date in yyyy-MM-dd format. Defaults to 7 days ago if not specified.")] string? startDate = null,
+        [Description("End date in yyyy-MM-dd format. Defaults to today if not specified.")] string? endDate = null,
+        CancellationToken cancellationToken = default)
     {
-        var start = startDate is not null ? DateOnly.Parse(startDate) : (DateOnly?)null;
-        var end = endDate is not null ? DateOnly.Parse(endDate) : (DateOnly?)null;
-        var result = await client.GetHeartRateAsync(start, end);
+        var start = DateHelper.ParseDate(startDate, nameof(startDate));
+        var end = DateHelper.ParseDate(endDate, nameof(endDate));
+        var result = await client.GetHeartRateAsync(start, end, cancellationToken);
+
         return JsonSerializer.Serialize(result);
     }
 
     [McpServerTool, Description("Retrieves heart rate variability data from the Oura Ring.")]
-    public async Task<string> GetHeartRateVariability(string? startDate = null, string? endDate = null)
+    public async Task<string> GetHeartRateVariability(
+        [Description("Start date in yyyy-MM-dd format. Defaults to 7 days ago if not specified.")] string? startDate = null,
+        [Description("End date in yyyy-MM-dd format. Defaults to today if not specified.")] string? endDate = null,
+        CancellationToken cancellationToken = default)
     {
-        var start = startDate is not null ? DateOnly.Parse(startDate) : (DateOnly?)null;
-        var end = endDate is not null ? DateOnly.Parse(endDate) : (DateOnly?)null;
-        var result = await client.GetHeartRateVariabilityAsync(start, end);
+        var start = DateHelper.ParseDate(startDate, nameof(startDate));
+        var end = DateHelper.ParseDate(endDate, nameof(endDate));
+        var result = await client.GetHeartRateVariabilityAsync(start, end, cancellationToken);
+
         return JsonSerializer.Serialize(result);
     }
 
     [McpServerTool, Description("Retrieves daily SpO2 blood oxygen data from the Oura Ring.")]
-    public async Task<string> GetDailySpo2(string? startDate = null, string? endDate = null)
+    public async Task<string> GetDailySpo2(
+        [Description("Start date in yyyy-MM-dd format. Defaults to 7 days ago if not specified.")] string? startDate = null,
+        [Description("End date in yyyy-MM-dd format. Defaults to today if not specified.")] string? endDate = null,
+        CancellationToken cancellationToken = default)
     {
-        var start = startDate is not null ? DateOnly.Parse(startDate) : (DateOnly?)null;
-        var end = endDate is not null ? DateOnly.Parse(endDate) : (DateOnly?)null;
-        var result = await client.GetDailySpo2Async(start, end);
+        var start = DateHelper.ParseDate(startDate, nameof(startDate));
+        var end = DateHelper.ParseDate(endDate, nameof(endDate));
+        var result = await client.GetDailySpo2Async(start, end, cancellationToken);
+
         return JsonSerializer.Serialize(result);
     }
 
     [McpServerTool, Description("Retrieves VO2 max estimates from the Oura Ring.")]
-    public async Task<string> GetVo2Max(string? startDate = null, string? endDate = null)
+    public async Task<string> GetVo2Max(
+        [Description("Start date in yyyy-MM-dd format. Defaults to 7 days ago if not specified.")] string? startDate = null,
+        [Description("End date in yyyy-MM-dd format. Defaults to today if not specified.")] string? endDate = null,
+        CancellationToken cancellationToken = default)
     {
-        var start = startDate is not null ? DateOnly.Parse(startDate) : (DateOnly?)null;
-        var end = endDate is not null ? DateOnly.Parse(endDate) : (DateOnly?)null;
-        var result = await client.GetVo2MaxAsync(start, end);
+        var start = DateHelper.ParseDate(startDate, nameof(startDate));
+        var end = DateHelper.ParseDate(endDate, nameof(endDate));
+        var result = await client.GetVo2MaxAsync(start, end, cancellationToken);
+
         return JsonSerializer.Serialize(result);
     }
 
     [McpServerTool, Description("Retrieves cardiovascular age estimates from the Oura Ring.")]
-    public async Task<string> GetCardiovascularAge(string? startDate = null, string? endDate = null)
+    public async Task<string> GetCardiovascularAge(
+        [Description("Start date in yyyy-MM-dd format. Defaults to 7 days ago if not specified.")] string? startDate = null,
+        [Description("End date in yyyy-MM-dd format. Defaults to today if not specified.")] string? endDate = null,
+        CancellationToken cancellationToken = default)
     {
-        var start = startDate is not null ? DateOnly.Parse(startDate) : (DateOnly?)null;
-        var end = endDate is not null ? DateOnly.Parse(endDate) : (DateOnly?)null;
-        var result = await client.GetCardiovascularAgeAsync(start, end);
+        var start = DateHelper.ParseDate(startDate, nameof(startDate));
+        var end = DateHelper.ParseDate(endDate, nameof(endDate));
+        var result = await client.GetCardiovascularAgeAsync(start, end, cancellationToken);
+
         return JsonSerializer.Serialize(result);
     }
 }
