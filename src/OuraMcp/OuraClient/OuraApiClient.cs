@@ -66,14 +66,11 @@ public class OuraApiClient : IOuraApiClient
     public Task<IReadOnlyList<HeartRate>> GetHeartRateAsync(DateOnly? startDate = null, DateOnly? endDate = null, CancellationToken ct = default)
         => GetCollectionAsync<HeartRate>("v2/usercollection/heartrate", startDate, endDate, ct);
 
-    public Task<IReadOnlyList<HeartRateVariability>> GetHeartRateVariabilityAsync(DateOnly? startDate = null, DateOnly? endDate = null, CancellationToken ct = default)
-        => GetCollectionAsync<HeartRateVariability>("v2/usercollection/heart_rate_variability", startDate, endDate, ct);
-
     public Task<IReadOnlyList<DailySpo2>> GetDailySpo2Async(DateOnly? startDate = null, DateOnly? endDate = null, CancellationToken ct = default)
         => GetCollectionAsync<DailySpo2>("v2/usercollection/daily_spo2", startDate, endDate, ct);
 
     public Task<IReadOnlyList<Vo2Max>> GetVo2MaxAsync(DateOnly? startDate = null, DateOnly? endDate = null, CancellationToken ct = default)
-        => GetCollectionAsync<Vo2Max>("v2/usercollection/vo2_max", startDate, endDate, ct);
+        => GetCollectionAsync<Vo2Max>("v2/usercollection/vO2_max", startDate, endDate, ct);
 
     public Task<IReadOnlyList<CardiovascularAge>> GetCardiovascularAgeAsync(DateOnly? startDate = null, DateOnly? endDate = null, CancellationToken ct = default)
         => GetCollectionAsync<CardiovascularAge>("v2/usercollection/daily_cardiovascular_age", startDate, endDate, ct);

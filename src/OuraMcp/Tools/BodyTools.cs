@@ -21,19 +21,6 @@ public class BodyTools(IOuraApiClient client)
         return JsonSerializer.Serialize(result);
     }
 
-    [McpServerTool(Name = "get_heart_rate_variability"), Description("Retrieves heart rate variability data from the Oura Ring.")]
-    public async Task<string> GetHeartRateVariability(
-        [Description("Start date in yyyy-MM-dd format. Defaults to 7 days ago if not specified.")] string? startDate = null,
-        [Description("End date in yyyy-MM-dd format. Defaults to today if not specified.")] string? endDate = null,
-        CancellationToken cancellationToken = default)
-    {
-        var start = DateHelper.ParseDate(startDate, nameof(startDate));
-        var end = DateHelper.ParseDate(endDate, nameof(endDate));
-        var result = await client.GetHeartRateVariabilityAsync(start, end, ct: cancellationToken);
-
-        return JsonSerializer.Serialize(result);
-    }
-
     [McpServerTool(Name = "get_daily_spo2"), Description("Retrieves daily SpO2 blood oxygen data from the Oura Ring.")]
     public async Task<string> GetDailySpo2(
         [Description("Start date in yyyy-MM-dd format. Defaults to 7 days ago if not specified.")] string? startDate = null,

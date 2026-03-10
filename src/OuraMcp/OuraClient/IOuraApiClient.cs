@@ -43,9 +43,6 @@ public interface IOuraApiClient
     /// <summary>Retrieves heart rate data from the Oura API.</summary>
     Task<IReadOnlyList<HeartRate>> GetHeartRateAsync(DateOnly? startDate = null, DateOnly? endDate = null, CancellationToken ct = default);
 
-    /// <summary>Retrieves heart rate variability data from the Oura API.</summary>
-    Task<IReadOnlyList<HeartRateVariability>> GetHeartRateVariabilityAsync(DateOnly? startDate = null, DateOnly? endDate = null, CancellationToken ct = default);
-
     /// <summary>Retrieves daily SpO2 blood oxygen data from the Oura API.</summary>
     Task<IReadOnlyList<DailySpo2>> GetDailySpo2Async(DateOnly? startDate = null, DateOnly? endDate = null, CancellationToken ct = default);
 

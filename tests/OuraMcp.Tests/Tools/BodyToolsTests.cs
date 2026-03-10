@@ -36,25 +36,6 @@ public class BodyToolsTests
     }
 
     [Fact]
-    public async Task GetHeartRateVariability_DelegatesToApiClient()
-    {
-        var expected = new List<HeartRateVariability>
-        {
-            new() { Id = "hrv-1", Day = new DateOnly(2025, 1, 15) }
-        };
-        _mockClient
-            .Setup(c => c.GetHeartRateVariabilityAsync(It.IsAny<DateOnly?>(), It.IsAny<DateOnly?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(expected);
-
-        var result = await _sut.GetHeartRateVariability(null, null);
-
-        result.Should().NotBeNullOrEmpty();
-        _mockClient.Verify(
-            c => c.GetHeartRateVariabilityAsync(null, null, It.IsAny<CancellationToken>()),
-            Times.Once);
-    }
-
-    [Fact]
     public async Task GetDailySpo2_DelegatesToApiClient()
     {
         var expected = new List<DailySpo2>

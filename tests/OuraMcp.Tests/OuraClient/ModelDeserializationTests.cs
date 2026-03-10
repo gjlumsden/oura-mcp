@@ -457,43 +457,6 @@ public class ModelDeserializationTests
     }
 
     [Fact]
-    public void HeartRateVariability_Deserializes_WithNestedItems()
-    {
-        const string json = """
-            {
-                "id": "hrv-1",
-                "day": "2024-08-12",
-                "timestamp": "2024-08-12T06:00:00+00:00",
-                "items": [
-                    {
-                        "avg_rmssd": 42.5,
-                        "avg_sdnn": 55.3,
-                        "timestamp": "2024-08-12T01:00:00+00:00"
-                    },
-                    {
-                        "avg_rmssd": 38.1,
-                        "avg_sdnn": 50.0,
-                        "timestamp": "2024-08-12T02:00:00+00:00"
-                    }
-                ]
-            }
-            """;
-
-        var result = JsonSerializer.Deserialize<HeartRateVariability>(json, JsonOptions);
-
-        result.Should().NotBeNull();
-        result!.Id.Should().Be("hrv-1");
-        result.Day.Should().Be(new DateOnly(2024, 8, 12));
-        result.Timestamp.Should().Be(DateTimeOffset.Parse("2024-08-12T06:00:00+00:00"));
-        result.Items.Should().HaveCount(2);
-        result.Items![0].AvgRmssd.Should().Be(42.5);
-        result.Items[0].AvgSdnn.Should().Be(55.3);
-        result.Items[0].Timestamp.Should().Be(DateTimeOffset.Parse("2024-08-12T01:00:00+00:00"));
-        result.Items[1].AvgRmssd.Should().Be(38.1);
-        result.Items[1].AvgSdnn.Should().Be(50.0);
-    }
-
-    [Fact]
     public void DailySpo2_Deserializes_WithNestedPercentage()
     {
         const string json = """
