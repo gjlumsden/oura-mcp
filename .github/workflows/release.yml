@@ -6,7 +6,6 @@ on:
 
 permissions:
   contents: write
-  id-token: write
 
 jobs:
   release:
@@ -41,22 +40,21 @@ jobs:
       - name: Pack with version
         run: dotnet pack src/OuraMcp/OuraMcp.csproj --no-build -c Release -o ./nupkg -p:Version=${{ steps.version.outputs.VERSION }}
 
-      - name: Install signing tool
-        run: dotnet tool install --global sign
-
-      - name: Azure login
-        uses: azure/login@v2
-        with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-
-      - name: Sign NuGet package
-        run: |
-          sign code trusted-signing ./nupkg/*.nupkg `
-            --trusted-signing-endpoint ${{ secrets.SIGNING_ENDPOINT }} `
-            --trusted-signing-account ${{ secrets.SIGNING_ACCOUNT }} `
-            --trusted-signing-certificate-profile ${{ secrets.SIGNING_CERT_PROFILE }}
+      # TODO: Add Azure Trusted Signing when identity validation is complete
+      # - name: Install signing tool
+      #   run: dotnet tool install --global sign
+      # - name: Azure login
+      #   uses: azure/login@v2
+      #   with:
+      #     client-id: ${{ secrets.AZURE_CLIENT_ID }}
+      #     tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+      #     subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      # - name: Sign NuGet package
+      #   run: |
+      #     sign code trusted-signing ./nupkg/*.nupkg `
+      #       --trusted-signing-endpoint ${{ secrets.SIGNING_ENDPOINT }} `
+      #       --trusted-signing-account ${{ secrets.SIGNING_ACCOUNT }} `
+      #       --trusted-signing-certificate-profile ${{ secrets.SIGNING_CERT_PROFILE }}
 
       - name: Publish to NuGet
         run: dotnet nuget push ./nupkg/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
