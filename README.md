@@ -33,6 +33,8 @@ Or run without installing (requires .NET 10):
 dnx -y gjlumsden.OuraMcp
 ```
 
+> **Note:** The `dnx` option runs the server directly. You still need to install the tool first (`dotnet tool install -g gjlumsden.OuraMcp`) to run `oura-mcp login` for initial authentication. After login, you can use either `oura-mcp` or `dnx` to run the server.
+
 ### 2. Login
 
 ```powershell
