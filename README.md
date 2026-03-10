@@ -138,7 +138,6 @@ Any MCP-compatible tool can be combined — the AI assistant joins the dots acro
 | `get_daily_resilience` | Retrieves daily resilience data from the Oura Ring. |
 | `get_rest_mode_periods` | Retrieves rest mode period data from the Oura Ring. |
 | `get_heart_rate` | Retrieves heart rate data from the Oura Ring. |
-| `get_heart_rate_variability` | Retrieves heart rate variability data from the Oura Ring. |
 | `get_daily_spo2` | Retrieves daily SpO2 blood oxygen data from the Oura Ring. |
 | `get_vo2_max` | Retrieves VO2 max estimates from the Oura Ring. |
 | `get_cardiovascular_age` | Retrieves cardiovascular age estimates from the Oura Ring. |
@@ -146,6 +145,8 @@ Any MCP-compatible tool can be combined — the AI assistant joins the dots acro
 | `get_enhanced_tags` | Retrieves enhanced tags from the Oura Ring. |
 
 Most date-range tools accept optional `startDate` and `endDate` parameters (format: `YYYY-MM-DD`).
+
+> **Note:** HRV (heart rate variability) data is embedded in the `get_sleep_periods` response — there is no separate HRV endpoint in the Oura API v2.
 
 ## Authentication Flow
 
