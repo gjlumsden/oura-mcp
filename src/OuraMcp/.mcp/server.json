@@ -1,0 +1,6 @@
+{
+  "$schema": "https://json.schemastore.org/mcp-server.json",
+  "name": "OuraMcp",
+  "description": "Oura Ring health data MCP server — sleep, activity, readiness, stress, heart rate, SpO2, and more",
+  "version": "0.1.0"
+}

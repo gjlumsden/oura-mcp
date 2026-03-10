@@ -50,6 +50,13 @@ tests/OuraMcp.Tests/      # Unit/integration tests
 - **Scopes:** `email personal daily session heartrate tag workout spo2 ring_configuration`
 - Tokens passed as `Authorization: Bearer <token>`.
 
+## Distribution
+
+- Published as a **NuGet .NET tool**: `dotnet tool install -g OuraMcp` or `dnx -y OuraMcp`.
+- `PackageType` is `McpServer` for NuGet MCP discovery.
+- Consumer-facing commands use the tool name (`oura-mcp login`, `oura-mcp`); dev commands use `dotnet run --project src/OuraMcp`.
+- README is consumer-first (NuGet install path); clone-and-build lives under the Development section.
+
 ## Tech Stack & Conventions
 
 - **.NET 10** / C# with nullable reference types.

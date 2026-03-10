@@ -5,10 +5,30 @@
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+
+    <!-- NuGet tool distribution -->
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>oura-mcp</ToolCommandName>
+    <PackageType>McpServer</PackageType>
+    <PackageId>OuraMcp</PackageId>
+    <Version>0.1.0</Version>
+    <Authors>gjlumsden</Authors>
+    <Description>MCP server exposing Oura Ring health data (sleep, activity, readiness, stress, heart rate, and more) for AI assistants like GitHub Copilot and Claude.</Description>
+    <PackageProjectUrl>https://github.com/gjlumsden/oura-mcp</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/gjlumsden/oura-mcp</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageTags>mcp;oura;health;ai;dotnet-tool;oura-ring;sleep;fitness</PackageTags>
   </PropertyGroup>
 
   <ItemGroup>
     <InternalsVisibleTo Include="OuraMcp.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="../../README.md" Pack="true" PackagePath="/" />
+    <None Include=".mcp/server.json" Pack="true" PackagePath="/.mcp/" />
   </ItemGroup>
 
   <ItemGroup>
