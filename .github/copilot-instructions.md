@@ -54,9 +54,10 @@ tests/OuraMcp.Tests/      # Unit/integration tests
 ## Distribution
 
 - Published as a **NuGet .NET tool**: `dotnet tool install -g gjlumsden.OuraMcp` or `dnx -y gjlumsden.OuraMcp`.
-- `PackageType` is `McpServer` for NuGet MCP discovery.
+- `PackageType` is `DotnetTool;McpServer` for both tool install and NuGet MCP discovery.
 - Consumer-facing commands use the tool name (`oura-mcp login`, `oura-mcp`); dev commands use `dotnet run --project src/OuraMcp -- login` / `dotnet run --project src/OuraMcp`.
 - README is consumer-first (NuGet install path); clone-and-build lives under the Development section.
+- **Version alignment:** NuGet package version, `AssemblyVersion`, and `FileVersion` must always match. The release workflow derives all three from the git tag (`v1.2.3` → `1.2.3`). The csproj `<Version>` is a local dev fallback only.
 
 ## Tech Stack & Conventions
 
