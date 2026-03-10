@@ -6,7 +6,11 @@
 version: 2
 updates:
   - package-ecosystem: "nuget"
-    directory: "/"
+    directory: "/src/OuraMcp"
+    schedule:
+      interval: "weekly"
+  - package-ecosystem: "nuget"
+    directory: "/tests/OuraMcp.Tests"
     schedule:
       interval: "weekly"
   - package-ecosystem: "github-actions"
