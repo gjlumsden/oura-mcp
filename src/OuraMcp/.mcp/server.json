@@ -10,7 +10,7 @@
     {
       "registryType": "nuget",
       "identifier": "gjlumsden.OuraMcp",
-      "environment_variables": [
+      "environmentVariables": [
         {
           "name": "OURA_CLIENT_ID",
           "description": "Your Oura OAuth application client ID",
