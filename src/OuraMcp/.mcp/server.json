@@ -1,5 +1,27 @@
 {
-  "$schema": "https://json.schemastore.org/mcp-server.json",
-  "name": "gjlumsden.OuraMcp",
-  "description": "Oura Ring health data MCP server — sleep, activity, readiness, stress, heart rate, SpO2, and more"
+  "$schema": "https://modelcontextprotocol.io/schemas/draft/2025-07-09/server.json",
+  "name": "gjlumsden/OuraMcp",
+  "description": "Oura Ring health data MCP server — sleep, activity, readiness, stress, heart rate, SpO2, and more",
+  "repository": {
+    "url": "https://github.com/gjlumsden/oura-mcp",
+    "source": "github"
+  },
+  "packages": [
+    {
+      "registry_name": "nuget",
+      "name": "gjlumsden.OuraMcp",
+      "environment_variables": [
+        {
+          "name": "OURA_CLIENT_ID",
+          "description": "Your Oura OAuth application client ID",
+          "required": true
+        },
+        {
+          "name": "OURA_CLIENT_SECRET",
+          "description": "Your Oura OAuth application client secret",
+          "required": true
+        }
+      ]
+    }
+  ]
 }
