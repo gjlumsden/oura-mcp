@@ -9,7 +9,7 @@
     <!-- NuGet tool distribution -->
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>oura-mcp</ToolCommandName>
-    <PackageType>McpServer</PackageType>
+    <PackageType>DotnetTool;McpServer</PackageType>
     <PackageId>gjlumsden.OuraMcp</PackageId>
     <Version>0.1.0</Version>
     <Authors>gjlumsden</Authors>
