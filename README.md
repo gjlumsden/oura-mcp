@@ -96,6 +96,30 @@ Once configured, your MCP client will discover the Oura tools automatically. Try
 - *"How did I sleep last night?"*
 - *"Show my readiness score for the past week"*
 - *"What was my resting heart rate trend this month?"*
+- *"Compare my deep sleep vs REM sleep over the last 2 weeks"*
+- *"What's my VO2 max and cardiovascular age?"*
+- *"How stressed was I this week?"*
+- *"Show my SpO2 trends — anything concerning?"*
+- *"When did I work out this week and how many calories did I burn?"*
+
+## Combining with Other MCP Tools
+
+The real power comes from combining Oura data with other MCP servers. For example, with [WorkIQ](https://github.com/microsoft/work-iq-mcp) (Microsoft 365 Copilot):
+
+- *"Look at my meetings last week and correlate with my stress levels"*
+- *"Which days did I have the most meetings? How did that affect my sleep?"*
+- *"I had a stressful Friday — what meetings were in my calendar that day?"*
+- *"Compare my readiness scores on meeting-heavy days vs focus days"*
+
+With the [Azure MCP Server](https://github.com/Azure/azure-mcp):
+
+- *"I'm on-call this week — show my sleep quality and readiness so I know if I'm fit for incident response"*
+
+With GitHub MCP:
+
+- *"Show my commit activity alongside my daily activity scores — am I coding more on high-energy days?"*
+
+Any MCP-compatible tool can be combined — the AI assistant joins the dots across data sources automatically.
 
 ## Available Tools
 
