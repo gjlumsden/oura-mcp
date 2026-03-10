@@ -32,7 +32,7 @@ jobs:
         run: dotnet restore
 
       - name: Build
-        run: dotnet build --no-restore -c Release -p:Version=${{ steps.version.outputs.VERSION }}
+        run: dotnet build --no-restore -c Release -p:Version=${{ steps.version.outputs.VERSION }} -p:AssemblyVersion=${{ steps.version.outputs.VERSION }} -p:FileVersion=${{ steps.version.outputs.VERSION }}
 
       - name: Test
         run: dotnet test --no-build -c Release
@@ -59,9 +59,11 @@ jobs:
       - name: NuGet login (Trusted Publishing via OIDC)
         uses: NuGet/login@v1
         id: nuget_login
+        with:
+          user: gjlumsden
 
       - name: Publish to NuGet
-        run: dotnet nuget push ./nupkg/*.nupkg --api-key ${{ steps.nuget_login.outputs.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
+        run: dotnet nuget push ./nupkg/*.nupkg --api-key "${{ steps.nuget_login.outputs.NUGET_API_KEY }}" --source https://www.nuget.org/api/v2/package --skip-duplicate
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
