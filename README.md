@@ -8,6 +8,8 @@
 
 A **.NET 10 MCP server** that exposes [Oura Ring](https://ouraring.com/) health and wellness data as [Model Context Protocol](https://modelcontextprotocol.io/) tools for AI assistants.
 
+> **Disclaimer:** This is an independently developed open source project. It is not affiliated with, endorsed by, or sponsored by Ōura Health Oy. "Oura" and "Oura Ring" are trademarks of Ōura Health Oy. This project uses the [Oura API v2](https://cloud.ouraring.com/v2/docs) but is not maintained or supported by Oura. For official Oura support, visit [ouraring.com](https://ouraring.com/).
+
 ## Overview
 
 This server connects to the **Oura API v2** and surfaces ring data — sleep, activity, readiness, heart rate, and more — as MCP tools over **STDIO transport**. Authentication uses an **`az login`-style CLI flow**: run `oura-mcp login` once to authorize with Oura in your browser, and tokens are persisted locally for automatic reuse and refresh.
