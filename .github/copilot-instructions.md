@@ -32,6 +32,7 @@ tests/OuraMcp.Tests/      # Unit/integration tests
 3. Never commit secrets, tokens, or credentials.
 4. Keep `README.md` up to date when changing features or structure.
 5. **TDD:** Write a failing test first → implement minimum code to pass → refactor. Every feature or bug fix starts with a test.
+6. **Branch and PR required.** `main` is protected — all changes require a feature branch and pull request. Never commit directly to `main`.
 
 ## DI / IoC Conventions
 
