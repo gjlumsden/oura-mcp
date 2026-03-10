@@ -10,7 +10,7 @@
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>oura-mcp</ToolCommandName>
     <PackageType>McpServer</PackageType>
-    <PackageId>OuraMcp</PackageId>
+    <PackageId>gjlumsden.OuraMcp</PackageId>
     <Version>0.1.0</Version>
     <Authors>gjlumsden</Authors>
     <Description>MCP server exposing Oura Ring health data (sleep, activity, readiness, stress, heart rate, and more) for AI assistants like GitHub Copilot and Claude.</Description>

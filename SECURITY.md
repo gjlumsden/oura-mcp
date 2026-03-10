@@ -17,7 +17,7 @@ If you discover a security vulnerability, please report it responsibly:
 
 ## Security Considerations
 
-- OAuth tokens are encrypted at rest using .NET Data Protection (DPAPI on Windows, key-ring on Linux/macOS)
+- OAuth tokens are encrypted at rest using .NET Data Protection (DPAPI on Windows, file-based key storage on Linux/macOS (keys stored in `~/.aspnet/DataProtection-Keys/`))
 - Tokens are stored in `~/.oura-mcp/tokens.json` with restricted file permissions
 - Client credentials (OURA_CLIENT_ID, OURA_CLIENT_SECRET) are passed via environment variables — never stored in source
 - The server runs locally via STDIO transport — no network ports are opened during normal operation

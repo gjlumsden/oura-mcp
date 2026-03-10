@@ -3,7 +3,7 @@
 [![.NET 10](https://img.shields.io/badge/.NET-10.0-512BD4?logo=dotnet)](https://dotnet.microsoft.com/download/dotnet/10.0)
 [![MCP](https://img.shields.io/badge/MCP-1.1.0-blue?logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0id2hpdGUiIGQ9Ik0xMiAyQzYuNDggMiAyIDYuNDggMiAxMnM0LjQ4IDEwIDEwIDEwIDEwLTQuNDggMTAtMTBTMTcuNTIgMiAxMiAyem0wIDE4Yy00LjQyIDAtOC0zLjU4LTgtOHMzLjU4LTggOC04IDggMy41OCA4IDgtMy41OCA4LTggOHoiLz48L3N2Zz4=)](https://modelcontextprotocol.io/)
 [![Oura API v2](https://img.shields.io/badge/Oura_API-v2-000000)](https://cloud.ouraring.com/v2/docs)
-[![NuGet](https://img.shields.io/nuget/v/OuraMcp?logo=nuget)](https://www.nuget.org/packages/OuraMcp)
+[![NuGet](https://img.shields.io/nuget/v/gjlumsden.OuraMcp?logo=nuget)](https://www.nuget.org/packages/gjlumsden.OuraMcp)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 A **.NET 10 MCP server** that exposes [Oura Ring](https://ouraring.com/) health and wellness data as [Model Context Protocol](https://modelcontextprotocol.io/) tools for AI assistants.
@@ -22,13 +22,15 @@ This server connects to the **Oura API v2** and surfaces ring data — sleep, ac
 ### 1. Install
 
 ```powershell
-dotnet tool install -g OuraMcp
+dotnet tool install -g gjlumsden.OuraMcp
 ```
+
+### No-Install Option
 
 Or run without installing (requires .NET 10):
 
 ```powershell
-dnx -y OuraMcp
+dnx -y gjlumsden.OuraMcp
 ```
 
 ### 2. Login
@@ -51,8 +53,7 @@ Add the server to your MCP client config. The client launches the server process
 {
   "mcpServers": {
     "oura": {
-      "command": "dnx",
-      "args": ["-y", "OuraMcp"],
+      "command": "oura-mcp",
       "env": {
         "OURA_CLIENT_ID": "<your-client-id>",
         "OURA_CLIENT_SECRET": "<your-client-secret>"
@@ -68,8 +69,7 @@ Add the server to your MCP client config. The client launches the server process
 {
   "mcpServers": {
     "oura": {
-      "command": "dnx",
-      "args": ["-y", "OuraMcp"],
+      "command": "oura-mcp",
       "env": {
         "OURA_CLIENT_ID": "<your-client-id>",
         "OURA_CLIENT_SECRET": "<your-client-secret>"
@@ -78,6 +78,28 @@ Add the server to your MCP client config. The client launches the server process
   }
 }
 ```
+
+<details>
+<summary><strong>Using the no-install (dnx) option?</strong></summary>
+
+Replace the server entry with:
+
+```json
+{
+  "mcpServers": {
+    "oura": {
+      "command": "dnx",
+      "args": ["-y", "gjlumsden.OuraMcp"],
+      "env": {
+        "OURA_CLIENT_ID": "<your-client-id>",
+        "OURA_CLIENT_SECRET": "<your-client-secret>"
+      }
+    }
+  }
+}
+```
+
+</details>
 
 ### 4. Start Using
 
@@ -142,7 +164,7 @@ Most date-range tools accept optional `startDate` and `endDate` parameters (form
 
 This server uses an **`az login`-style CLI authentication** pattern, similar to the [Azure MCP Server](https://github.com/Azure/azure-mcp):
 
-1. **One-time login:** Run `oura-mcp login` (or `dotnet run -- login` from source) to open your browser to the Oura OAuth consent screen.
+1. **One-time login:** Run `oura-mcp login` (or `dotnet run --project src/OuraMcp -- login` from source) to open your browser to the Oura OAuth consent screen.
 2. **Token exchange:** After you authorize, a local callback server on `http://localhost:8742/callback/` receives the authorization code and exchanges it for access/refresh tokens.
 3. **Persistent storage:** Tokens are saved to `~/.oura-mcp/tokens.json` (file permissions restricted to owner on Unix).
 4. **Automatic refresh:** On startup the server loads saved tokens and refreshes them automatically when expired.
