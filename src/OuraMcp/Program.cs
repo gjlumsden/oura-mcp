@@ -13,13 +13,30 @@ var builder = Host.CreateApplicationBuilder(args);
 builder.Logging.AddConsole(options =>
     options.LogToStandardErrorThreshold = LogLevel.Trace);
 
+// Validate required OAuth configuration early so users get a clear message
+var clientId = builder.Configuration["OURA_CLIENT_ID"];
+var clientSecret = builder.Configuration["OURA_CLIENT_SECRET"];
+var missingVars = new List<string>();
+if (string.IsNullOrEmpty(clientId)) missingVars.Add("OURA_CLIENT_ID");
+if (string.IsNullOrEmpty(clientSecret)) missingVars.Add("OURA_CLIENT_SECRET");
+
+if (missingVars.Count > 0)
+{
+    Console.Error.WriteLine($"Error: Required environment variable(s) not set: {string.Join(", ", missingVars)}");
+    Console.Error.WriteLine("Set them before running oura-mcp. For example:");
+    Console.Error.WriteLine();
+    foreach (var v in missingVars)
+        Console.Error.WriteLine($"  export {v}=<your-value>");
+    Console.Error.WriteLine();
+    Console.Error.WriteLine("See https://github.com/gjlumsden/oura-mcp#setup for details.");
+    Environment.Exit(1);
+}
+
 // Configuration
 builder.Services.Configure<OuraOAuthOptions>(opts =>
 {
-    opts.ClientId = builder.Configuration["OURA_CLIENT_ID"]
-        ?? throw new InvalidOperationException("OURA_CLIENT_ID is required");
-    opts.ClientSecret = builder.Configuration["OURA_CLIENT_SECRET"]
-        ?? throw new InvalidOperationException("OURA_CLIENT_SECRET is required");
+    opts.ClientId = clientId!;
+    opts.ClientSecret = clientSecret!;
     opts.RedirectUri = builder.Configuration["OURA_REDIRECT_URI"] ?? "http://localhost:8742/callback/";
 });
 
@@ -45,22 +62,39 @@ builder.Services.AddMcpServer()
 // Handle CLI login command — build the host to resolve DI services, then run the login flow
 if (args.Contains("login"))
 {
-    var host = builder.Build();
-    var options = host.Services.GetRequiredService<IOptions<OuraOAuthOptions>>().Value;
-    var tokenService = host.Services.GetRequiredService<IOuraTokenService>();
-    using var listener = new HttpCallbackListener();
-    var browser = new SystemBrowserLauncher();
-    var loginCommand = new OuraLoginCommand(options, tokenService, listener, browser);
+    try
+    {
+        var host = builder.Build();
+        var options = host.Services.GetRequiredService<IOptions<OuraOAuthOptions>>().Value;
+        var tokenService = host.Services.GetRequiredService<IOuraTokenService>();
+        using var listener = new HttpCallbackListener();
+        var browser = new SystemBrowserLauncher();
+        var loginCommand = new OuraLoginCommand(options, tokenService, listener, browser);
 
-    Console.Error.WriteLine("Opening browser for Oura authorization...");
-    Console.Error.WriteLine($"If the browser doesn't open, visit: {loginCommand.BuildAuthorizeUrl()}");
-    await loginCommand.RunAsync();
-    Console.Error.WriteLine("Login successful! Tokens saved to ~/.oura-mcp/tokens.json");
+        Console.Error.WriteLine("Opening browser for Oura authorization...");
+        Console.Error.WriteLine($"If the browser doesn't open, visit: {loginCommand.BuildAuthorizeUrl()}");
+        await loginCommand.RunAsync();
+        Console.Error.WriteLine("Login successful! Tokens saved to ~/.oura-mcp/tokens.json");
+    }
+    catch (Exception ex)
+    {
+        Console.Error.WriteLine($"Error: Login failed. {ex.Message}");
+        Console.Error.WriteLine("If the problem persists, try running 'oura-mcp login' again.");
+        Environment.Exit(1);
+    }
 
     return;
 }
 
-await builder.Build().RunAsync();
+try
+{
+    await builder.Build().RunAsync();
+}
+catch (Exception ex)
+{
+    Console.Error.WriteLine($"Error: {ex.Message}");
+    Environment.Exit(1);
+}
 
 /// <summary>
 /// Partial class declaration to make the entry point accessible for integration tests.
