@@ -26,7 +26,7 @@ builder.Services.AddSerilog(config => config
         restrictedToMinimumLevel: LogEventLevel.Error,
         outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {SourceContext}{NewLine}  {Message:lj}{NewLine}{Exception}{NewLine}",
         rollingInterval: RollingInterval.Day,
-        retainedFileCountLimit: 7,
+        retainedFileCountLimit: 1,
         fileSizeLimitBytes: 5 * 1024 * 1024,
         shared: true));
 
