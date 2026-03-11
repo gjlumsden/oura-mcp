@@ -96,8 +96,23 @@ public class OuraApiClient : IOuraApiClient
 
         var json = await response.Content.ReadAsStringAsync(ct);
 
-        return JsonSerializer.Deserialize<T>(json, JsonOptions)
-            ?? throw new InvalidOperationException($"Failed to deserialize response from {path}");
+        try
+        {
+            var result = JsonSerializer.Deserialize<T>(json, JsonOptions);
+            if (result is null)
+            {
+                _logger.LogError("Oura API returned null/empty response for {Path}", path);
+                throw new McpException($"The Oura API returned an empty response for '{path}'.");
+            }
+
+            return result;
+        }
+        catch (JsonException ex)
+        {
+            _logger.LogError(ex, "Failed to parse Oura API response from {Path}", path);
+            throw new McpException(
+                $"Failed to parse the Oura API response for '{path}'. The API may have changed or returned invalid data.");
+        }
     }
 
     private async Task<IReadOnlyList<T>> GetCollectionAsync<T>(
@@ -112,7 +127,18 @@ public class OuraApiClient : IOuraApiClient
             using var response = await SendWithRetryAsync(url, ct);
 
             var json = await response.Content.ReadAsStringAsync(ct);
-            var collection = JsonSerializer.Deserialize<OuraCollectionResponse<T>>(json, JsonOptions);
+
+            OuraCollectionResponse<T>? collection;
+            try
+            {
+                collection = JsonSerializer.Deserialize<OuraCollectionResponse<T>>(json, JsonOptions);
+            }
+            catch (JsonException ex)
+            {
+                _logger.LogError(ex, "Failed to parse Oura API collection response from {Path}", basePath);
+                throw new McpException(
+                    $"Failed to parse the Oura API response for '{basePath}'. The API may have changed or returned invalid data.");
+            }
 
             if (collection is null)
             {
@@ -139,15 +165,55 @@ public class OuraApiClient : IOuraApiClient
 
     private async Task<HttpResponseMessage> SendWithRetryAsync(string url, CancellationToken ct)
     {
-        var accessToken = await _tokenService.GetAccessTokenAsync(ct);
-        var response = await SendAuthorizedAsync(url, accessToken, ct);
+        string accessToken;
+        try
+        {
+            accessToken = await _tokenService.GetAccessTokenAsync(ct);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException || !ct.IsCancellationRequested)
+        {
+            _logger.LogError(ex, "Failed to retrieve Oura access token for {Url}", url);
+            throw new McpException(
+                "Unable to authenticate with Oura. Run 'oura-mcp login' to re-authenticate.");
+        }
+
+        HttpResponseMessage response;
+        try
+        {
+            response = await SendAuthorizedAsync(url, accessToken, ct);
+        }
+        catch (Exception ex) when (ex is HttpRequestException || (ex is OperationCanceledException && !ct.IsCancellationRequested))
+        {
+            _logger.LogError(ex, "Network error calling Oura API at {Url}", url);
+            throw new McpException(
+                "Failed to reach the Oura API. Check your network connection and try again.");
+        }
 
         // 401 → re-fetch token (may trigger refresh inside token service) and retry once
         if (response.StatusCode == HttpStatusCode.Unauthorized)
         {
             response.Dispose();
-            accessToken = await _tokenService.GetAccessTokenAsync(ct);
-            response = await SendAuthorizedAsync(url, accessToken, ct);
+            try
+            {
+                accessToken = await _tokenService.GetAccessTokenAsync(ct);
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException || !ct.IsCancellationRequested)
+            {
+                _logger.LogError(ex, "Token refresh failed for {Url}", url);
+                throw new McpException(
+                    "Authentication failed after token refresh. Run 'oura-mcp login' to re-authenticate.");
+            }
+
+            try
+            {
+                response = await SendAuthorizedAsync(url, accessToken, ct);
+            }
+            catch (Exception ex) when (ex is HttpRequestException || (ex is OperationCanceledException && !ct.IsCancellationRequested))
+            {
+                _logger.LogError(ex, "Network error calling Oura API at {Url} after token refresh", url);
+                throw new McpException(
+                    "Failed to reach the Oura API. Check your network connection and try again.");
+            }
         }
 
         // 429 → respect Retry-After header and retry once
@@ -156,7 +222,45 @@ public class OuraApiClient : IOuraApiClient
             var retryAfter = response.Headers.RetryAfter?.Delta ?? TimeSpan.FromSeconds(1);
             response.Dispose();
             await Task.Delay(retryAfter, ct);
-            response = await SendAuthorizedAsync(url, accessToken, ct);
+            try
+            {
+                response = await SendAuthorizedAsync(url, accessToken, ct);
+            }
+            catch (Exception ex) when (ex is HttpRequestException || (ex is OperationCanceledException && !ct.IsCancellationRequested))
+            {
+                _logger.LogError(ex, "Rate-limit retry failed for Oura API at {Url}", url);
+                throw new McpException(
+                    "The Oura API is rate-limiting requests and the retry also failed. Try again later.");
+            }
+        }
+
+        // 502/503/504 → transient server error, retry once after a short delay
+        if (response.StatusCode is HttpStatusCode.BadGateway or HttpStatusCode.ServiceUnavailable or HttpStatusCode.GatewayTimeout)
+        {
+            var statusCode = (int)response.StatusCode;
+            _logger.LogError("Oura API returned transient HTTP {StatusCode} for {Url}, retrying once", statusCode, url);
+            response.Dispose();
+            await Task.Delay(TimeSpan.FromSeconds(1), ct);
+            try
+            {
+                response = await SendAuthorizedAsync(url, accessToken, ct);
+            }
+            catch (Exception ex) when (ex is HttpRequestException || (ex is OperationCanceledException && !ct.IsCancellationRequested))
+            {
+                _logger.LogError(ex, "Transient-error retry also failed for Oura API at {Url}", url);
+                throw new McpException(
+                    $"The Oura API is temporarily unavailable (HTTP {statusCode}). Try again later.");
+            }
+
+            if (!response.IsSuccessStatusCode &&
+                response.StatusCode is HttpStatusCode.BadGateway or HttpStatusCode.ServiceUnavailable or HttpStatusCode.GatewayTimeout)
+            {
+                var retryStatusCode = (int)response.StatusCode;
+                response.Dispose();
+                _logger.LogError("Oura API returned HTTP {RetryStatusCode} on transient-error retry for {Url}", retryStatusCode, url);
+                throw new McpException(
+                    $"The Oura API is temporarily unavailable (HTTP {retryStatusCode}). Try again later.");
+            }
         }
 
         // 403 → log status and endpoint (no body to avoid leaking user data) and throw a user-friendly MCP error
@@ -165,12 +269,20 @@ public class OuraApiClient : IOuraApiClient
             response.Dispose();
             _logger.LogError("Oura API returned 403 Forbidden for {Url}", url);
             throw new McpException(
-                $"Access denied for '{url}'. This usually means your Oura subscription has expired " +
+                $"Access denied for '{StripQueryString(url)}'. This usually means your Oura subscription has expired " +
                 "or your account doesn't have access to this data type. " +
                 "Check your subscription status in the Oura app.");
         }
 
-        response.EnsureSuccessStatusCode();
+        // Any other non-success status code
+        if (!response.IsSuccessStatusCode)
+        {
+            var statusCode = (int)response.StatusCode;
+            response.Dispose();
+            _logger.LogError("Oura API returned unexpected HTTP {StatusCode} for {Url}", statusCode, url);
+            throw new McpException(
+                $"The Oura API returned an error (HTTP {statusCode}) for '{StripQueryString(url)}'. Try again later.");
+        }
 
         return response;
     }
@@ -197,5 +309,13 @@ public class OuraApiClient : IOuraApiClient
             queryParams.Add($"next_token={nextToken}");
 
         return queryParams.Count > 0 ? $"{path}?{string.Join("&", queryParams)}" : path;
+    }
+
+    /// <summary>Strips query string from a URL for use in user-facing error messages.</summary>
+    private static string StripQueryString(string url)
+    {
+        var index = url.IndexOf('?');
+
+        return index >= 0 ? url[..index] : url;
     }
 }

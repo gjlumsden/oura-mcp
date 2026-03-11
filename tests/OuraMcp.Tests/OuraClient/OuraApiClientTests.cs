@@ -354,4 +354,210 @@ public class OuraApiClientTests
         capturedUri.Should().NotBeNull();
         capturedUri!.PathAndQuery.Should().Contain(expectedPath);
     }
+
+    // ── Error handling tests ─────────────────────────────────────────
+
+    [Fact]
+    public async Task ApiCall_NetworkError_ThrowsMcpExceptionAndLogs()
+    {
+        _httpHandler.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ThrowsAsync(new HttpRequestException("Connection refused"));
+        var client = CreateClient();
+
+        var act = () => client.GetPersonalInfoAsync();
+
+        var ex = await act.Should().ThrowAsync<McpException>();
+        ex.Which.Message.Should().Contain("Failed to reach the Oura API");
+        _logger.Verify(
+            x => x.Log(
+                LogLevel.Error,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((o, _) => o.ToString()!.Contains("Network error")),
+                It.IsAny<HttpRequestException>(),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task ApiCall_TokenRetrievalFails_ThrowsMcpExceptionAndLogs()
+    {
+        SetupHttpResponse(HttpStatusCode.OK, "{}");
+        var client = CreateClient();
+        _tokenService.Reset();
+        _tokenService
+            .Setup(t => t.GetAccessTokenAsync(It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("No Oura tokens found"));
+
+        var act = () => client.GetPersonalInfoAsync();
+
+        var ex = await act.Should().ThrowAsync<McpException>();
+        ex.Which.Message.Should().Contain("Unable to authenticate");
+        _logger.Verify(
+            x => x.Log(
+                LogLevel.Error,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((o, _) => o.ToString()!.Contains("Failed to retrieve")),
+                It.IsAny<Exception>(),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+            Times.Once);
+    }
+
+    [Theory]
+    [InlineData(HttpStatusCode.BadGateway)]
+    [InlineData(HttpStatusCode.ServiceUnavailable)]
+    [InlineData(HttpStatusCode.GatewayTimeout)]
+    public async Task ApiCall_TransientServerError_RetriesOnceThenThrows(HttpStatusCode statusCode)
+    {
+        SetupHttpResponseSequence(
+            (statusCode, "Server error"),
+            (statusCode, "Server error"));
+        var client = CreateClient();
+
+        var act = () => client.GetPersonalInfoAsync();
+
+        var ex = await act.Should().ThrowAsync<McpException>();
+        ex.Which.Message.Should().Contain("temporarily unavailable");
+        _httpHandler.Protected().Verify(
+            "SendAsync",
+            Times.Exactly(2),
+            ItExpr.IsAny<HttpRequestMessage>(),
+            ItExpr.IsAny<CancellationToken>());
+    }
+
+    [Theory]
+    [InlineData(HttpStatusCode.BadGateway)]
+    [InlineData(HttpStatusCode.ServiceUnavailable)]
+    [InlineData(HttpStatusCode.GatewayTimeout)]
+    public async Task ApiCall_TransientServerError_RetriesAndSucceeds(HttpStatusCode statusCode)
+    {
+        var successJson = """{"id":"abc","age":30,"weight":70.5,"height":175.0,"biological_sex":"male","email":"test@test.com"}""";
+        SetupHttpResponseSequence(
+            (statusCode, "Server error"),
+            (HttpStatusCode.OK, successJson));
+        var client = CreateClient();
+
+        var result = await client.GetPersonalInfoAsync();
+
+        result.Should().NotBeNull();
+        result.Id.Should().Be("abc");
+    }
+
+    [Fact]
+    public async Task ApiCall_UnexpectedHttpStatus_ThrowsMcpException()
+    {
+        SetupHttpResponse(HttpStatusCode.NotFound, "Not found");
+        var client = CreateClient();
+
+        var act = () => client.GetPersonalInfoAsync();
+
+        var ex = await act.Should().ThrowAsync<McpException>();
+        ex.Which.Message.Should().Contain("HTTP 404");
+    }
+
+    [Fact]
+    public async Task ApiCall_MalformedJson_ThrowsMcpException()
+    {
+        SetupHttpResponse(HttpStatusCode.OK, "not valid json{{{");
+        var client = CreateClient();
+
+        var act = () => client.GetPersonalInfoAsync();
+
+        var ex = await act.Should().ThrowAsync<McpException>();
+        ex.Which.Message.Should().Contain("Failed to parse");
+    }
+
+    [Fact]
+    public async Task CollectionEndpoint_MalformedJson_ThrowsMcpException()
+    {
+        SetupHttpResponse(HttpStatusCode.OK, "not valid json{{{");
+        var client = CreateClient();
+
+        var act = () => client.GetDailyActivityAsync();
+
+        var ex = await act.Should().ThrowAsync<McpException>();
+        ex.Which.Message.Should().Contain("Failed to parse");
+    }
+
+    [Fact]
+    public async Task ApiCall_SingleEndpoint_NullResponse_ThrowsMcpException()
+    {
+        SetupHttpResponse(HttpStatusCode.OK, "null");
+        var client = CreateClient();
+
+        var act = () => client.GetPersonalInfoAsync();
+
+        var ex = await act.Should().ThrowAsync<McpException>();
+        ex.Which.Message.Should().Contain("empty response");
+    }
+
+    [Fact]
+    public async Task ApiCall_401ThenRefreshFails_ThrowsMcpExceptionAndLogs()
+    {
+        var tokenCallCount = 0;
+        SetupHttpResponseSequence(
+            (HttpStatusCode.Unauthorized, """{"detail":"Unauthorized"}"""),
+            (HttpStatusCode.OK, "{}"));
+        var client = CreateClient();
+        _tokenService.Reset();
+        _tokenService
+            .Setup(t => t.GetAccessTokenAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(() =>
+            {
+                tokenCallCount++;
+                if (tokenCallCount > 1)
+                    throw new InvalidOperationException("Refresh failed");
+                return FakeToken;
+            });
+
+        var act = () => client.GetPersonalInfoAsync();
+
+        var ex = await act.Should().ThrowAsync<McpException>();
+        ex.Which.Message.Should().Contain("Authentication failed");
+        _logger.Verify(
+            x => x.Log(
+                LogLevel.Error,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((o, _) => o.ToString()!.Contains("Token refresh failed")),
+                It.IsAny<Exception>(),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task ApiCall_TransientThen403_Falls_ThroughToForbiddenHandler()
+    {
+        var forbiddenJson = """{"detail":"Subscription expired"}""";
+        SetupHttpResponseSequence(
+            (HttpStatusCode.BadGateway, "Server error"),
+            (HttpStatusCode.Forbidden, forbiddenJson));
+        var client = CreateClient();
+
+        var act = () => client.GetPersonalInfoAsync();
+
+        var ex = await act.Should().ThrowAsync<McpException>();
+        ex.Which.Message.Should().Contain("Access denied");
+    }
+
+    [Fact]
+    public async Task ApiCall_SingleEndpoint_NullResponse_LogsBeforeThrowing()
+    {
+        SetupHttpResponse(HttpStatusCode.OK, "null");
+        var client = CreateClient();
+
+        var act = () => client.GetPersonalInfoAsync();
+
+        await act.Should().ThrowAsync<McpException>();
+        _logger.Verify(
+            x => x.Log(
+                LogLevel.Error,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((o, _) => o.ToString()!.Contains("null/empty")),
+                It.IsAny<Exception>(),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+            Times.Once);
+    }
 }
