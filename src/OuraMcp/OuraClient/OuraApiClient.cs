@@ -140,6 +140,7 @@ public class OuraApiClient : IOuraApiClient
         // 401 → re-fetch token (may trigger refresh inside token service) and retry once
         if (response.StatusCode == HttpStatusCode.Unauthorized)
         {
+            response.Dispose();
             accessToken = await _tokenService.GetAccessTokenAsync(ct);
             response = await SendAuthorizedAsync(url, accessToken, ct);
         }
@@ -148,15 +149,18 @@ public class OuraApiClient : IOuraApiClient
         if (response.StatusCode == (HttpStatusCode)429)
         {
             var retryAfter = response.Headers.RetryAfter?.Delta ?? TimeSpan.FromSeconds(1);
+            response.Dispose();
             await Task.Delay(retryAfter, ct);
             response = await SendAuthorizedAsync(url, accessToken, ct);
         }
 
-        // 403 → log the raw response and throw a user-friendly MCP error
+        // 403 → log a truncated response and throw a user-friendly MCP error
         if (response.StatusCode == HttpStatusCode.Forbidden)
         {
             var body = await response.Content.ReadAsStringAsync(ct);
-            _logger.LogError("Oura API returned 403 Forbidden for {Url}. Response: {Body}", url, body);
+            response.Dispose();
+            var truncatedBody = body.Length > 200 ? body[..200] + "..." : body;
+            _logger.LogError("Oura API returned 403 Forbidden for {Url}. Response (truncated): {Body}", url, truncatedBody);
             throw new McpException(
                 $"Access denied for '{url}'. This usually means your Oura subscription has expired " +
                 "or your account doesn't have access to this data type. " +
