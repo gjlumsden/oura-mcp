@@ -13,6 +13,7 @@ using Serilog.Events;
 var errorLogPath = OuraMcpPaths.ErrorLogPath;
 
 var builder = Host.CreateApplicationBuilder(args);
+var debugMode = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("OURA_DEBUG"));
 
 // Logging: route console output to stderr so it doesn't interfere with stdio transport
 builder.Logging.AddConsole(options =>
@@ -30,13 +31,26 @@ builder.Services.AddSerilog(config => config
         fileSizeLimitBytes: 5 * 1024 * 1024,
         shared: true));
 
+// Validate required OAuth configuration early so users get a clear message
+var clientId = builder.Configuration["OURA_CLIENT_ID"];
+var clientSecret = builder.Configuration["OURA_CLIENT_SECRET"];
+var missingVars = new List<string>();
+if (string.IsNullOrWhiteSpace(clientId)) missingVars.Add("OURA_CLIENT_ID");
+if (string.IsNullOrWhiteSpace(clientSecret)) missingVars.Add("OURA_CLIENT_SECRET");
+
+if (missingVars.Count > 0)
+{
+    Console.Error.WriteLine($"Error: Required environment variable(s) not set: {string.Join(", ", missingVars)}");
+    Console.Error.WriteLine("Set them as environment variables before running 'oura-mcp'.");
+    Console.Error.WriteLine("See https://github.com/gjlumsden/oura-mcp#getting-started for details.");
+    Environment.Exit(1);
+}
+
 // Configuration
 builder.Services.Configure<OuraOAuthOptions>(opts =>
 {
-    opts.ClientId = builder.Configuration["OURA_CLIENT_ID"]
-        ?? throw new InvalidOperationException("OURA_CLIENT_ID is required");
-    opts.ClientSecret = builder.Configuration["OURA_CLIENT_SECRET"]
-        ?? throw new InvalidOperationException("OURA_CLIENT_SECRET is required");
+    opts.ClientId = clientId!;
+    opts.ClientSecret = clientSecret!;
     opts.RedirectUri = builder.Configuration["OURA_REDIRECT_URI"] ?? "http://localhost:8742/callback/";
 });
 
@@ -62,22 +76,44 @@ builder.Services.AddMcpServer()
 // Handle CLI login command — build the host to resolve DI services, then run the login flow
 if (args.Contains("login"))
 {
-    var host = builder.Build();
-    var options = host.Services.GetRequiredService<IOptions<OuraOAuthOptions>>().Value;
-    var tokenService = host.Services.GetRequiredService<IOuraTokenService>();
-    using var listener = new HttpCallbackListener();
-    var browser = new SystemBrowserLauncher();
-    var loginCommand = new OuraLoginCommand(options, tokenService, listener, browser);
+    try
+    {
+        using var host = builder.Build();
+        var options = host.Services.GetRequiredService<IOptions<OuraOAuthOptions>>().Value;
+        var tokenService = host.Services.GetRequiredService<IOuraTokenService>();
+        using var listener = new HttpCallbackListener();
+        var browser = new SystemBrowserLauncher();
+        var loginCommand = new OuraLoginCommand(options, tokenService, listener, browser);
 
-    Console.Error.WriteLine("Opening browser for Oura authorization...");
-    Console.Error.WriteLine($"If the browser doesn't open, visit: {loginCommand.BuildAuthorizeUrl()}");
-    await loginCommand.RunAsync();
-    Console.Error.WriteLine("Login successful! Tokens saved to ~/.oura-mcp/tokens.json");
+        Console.Error.WriteLine("Opening browser for Oura authorization...");
+        Console.Error.WriteLine($"If the browser doesn't open, visit: {loginCommand.BuildAuthorizeUrl()}");
+        await loginCommand.RunAsync();
+        Console.Error.WriteLine("Login successful! Tokens saved to ~/.oura-mcp/tokens.json");
+    }
+    catch (Exception ex)
+    {
+        Console.Error.WriteLine($"Error: Login failed. {ex.Message}");
+        if (debugMode) Console.Error.WriteLine(ex.ToString());
+        Console.Error.WriteLine("If the problem persists, try running 'oura-mcp login' again.");
+        return 1;
+    }
 
-    return;
+    return 0;
 }
 
-await builder.Build().RunAsync();
+try
+{
+    using var host = builder.Build();
+    await host.RunAsync();
+}
+catch (Exception ex)
+{
+    Console.Error.WriteLine($"Error: {ex.Message}");
+    if (debugMode) Console.Error.WriteLine(ex.ToString());
+    return 1;
+}
+
+return 0;
 
 /// <summary>
 /// Partial class declaration to make the entry point accessible for integration tests.

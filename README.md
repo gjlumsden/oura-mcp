@@ -2,13 +2,13 @@
 
 [![.NET 10](https://img.shields.io/badge/.NET-10.0-512BD4?logo=dotnet)](https://dotnet.microsoft.com/download/dotnet/10.0)
 [![MCP](https://img.shields.io/badge/MCP-1.1.0-blue?logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0id2hpdGUiIGQ9Ik0xMiAyQzYuNDggMiAyIDYuNDggMiAxMnM0LjQ4IDEwIDEwIDEwIDEwLTQuNDggMTAtMTBTMTcuNTIgMiAxMiAyem0wIDE4Yy00LjQyIDAtOC0zLjU4LTgtOHMzLjU4LTggOC04IDggMy41OCA4IDgtMy41OCA4LTggOHoiLz48L3N2Zz4=)](https://modelcontextprotocol.io/)
-[![Oura API v2](https://img.shields.io/badge/Oura_API-v2-000000)](https://cloud.ouraring.com/v2/docs)
+[![Oura API v2](https://img.shields.io/badge/Oura_API-v2-000000)](https://developer.ouraring.com/)
 [![NuGet](https://img.shields.io/nuget/v/gjlumsden.OuraMcp?logo=nuget)](https://www.nuget.org/packages/gjlumsden.OuraMcp)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 A **.NET 10 MCP server** that exposes [Oura Ring](https://ouraring.com/) health and wellness data as [Model Context Protocol](https://modelcontextprotocol.io/) tools for AI assistants.
 
-> **Disclaimer:** This is an independently developed open source project. It is not affiliated with, endorsed by, or sponsored by Ōura Health Oy. "Oura" and "Oura Ring" are trademarks of Ōura Health Oy. This project uses the [Oura API v2](https://cloud.ouraring.com/v2/docs) but is not maintained or supported by Oura. For official Oura support, visit [ouraring.com](https://ouraring.com/).
+> **Disclaimer:** This is an independently developed open source project. It is not affiliated with, endorsed by, or sponsored by Ōura Health Oy. "Oura" and "Oura Ring" are trademarks of Ōura Health Oy. This project uses the [Oura API v2](https://developer.ouraring.com/) but is not maintained or supported by Oura. For official Oura support, visit [ouraring.com](https://ouraring.com/).
 
 ## Overview
 
@@ -19,7 +19,7 @@ This server connects to the **Oura API v2** and surfaces ring data — sleep, ac
 ### Prerequisites
 
 - [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0)
-- An Oura API application registered at <https://cloud.ouraring.com/oauth/applications> (redirect URI: `http://localhost:8742/callback/`)
+- An Oura API application registered at <https://developer.ouraring.com/> (redirect URI: `http://localhost:8742/callback/`)
 
 ### 1. Install
 
