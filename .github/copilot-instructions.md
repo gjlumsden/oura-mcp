@@ -25,7 +25,7 @@ tests/OuraMcp.Tests/      # Unit/integration tests
 ## Rules
 
 1. **Consult docs before coding.** Authoritative sources:
-   - Oura API v2: https://cloud.ouraring.com/v2/docs
+   - Oura API v2: https://developer.ouraring.com/
    - .NET MCP SDK: https://learn.microsoft.com/en-us/dotnet/ai/get-started-mcp
    - MCP spec: https://modelcontextprotocol.io/docs/getting-started/intro
 2. Never guess API shapes or SDK signatures — look them up.
