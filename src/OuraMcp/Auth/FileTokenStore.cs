@@ -76,7 +76,7 @@ public sealed class FileTokenStore : IOuraTokenStore
         }
         catch (CryptographicException ex)
         {
-            _logger.LogWarning(ex, "Token file is corrupted or was encrypted with a different key. Please re-login");
+            _logger.LogWarning(ex, "Token file is corrupted or was encrypted with a different key. Please re-login with 'oura-mcp login' or 'dnx -y gjlumsden.OuraMcp -- login'");
 
             return null;
         }

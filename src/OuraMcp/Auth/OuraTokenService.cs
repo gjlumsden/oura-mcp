@@ -29,7 +29,7 @@ public class OuraTokenService : IOuraTokenService
     {
         var stored = await _tokenStore.LoadAsync(ct)
             ?? throw new InvalidOperationException(
-                "No Oura tokens found. Run 'oura-mcp login' to authenticate.");
+                "No Oura tokens found. Run 'oura-mcp login' (or 'dnx -y gjlumsden.OuraMcp -- login') to authenticate.");
 
         if (stored.ExpiresAt <= DateTimeOffset.UtcNow)
         {
