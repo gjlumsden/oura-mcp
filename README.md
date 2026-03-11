@@ -35,8 +35,6 @@ Or run without installing (requires .NET 10):
 dnx -y gjlumsden.OuraMcp
 ```
 
-> **Note:** The `dnx` option runs the server directly. You still need to install the tool first (`dotnet tool install -g gjlumsden.OuraMcp`) to run `oura-mcp login` for initial authentication. After login, you can use either `oura-mcp` or `dnx` to run the server.
-
 ### 2. Login
 
 ```powershell
@@ -44,6 +42,19 @@ $env:OURA_CLIENT_ID = "<your-client-id>"
 $env:OURA_CLIENT_SECRET = "<your-client-secret>"
 oura-mcp login
 ```
+
+<details>
+<summary><strong>Using the no-install (dnx) option?</strong></summary>
+
+You can login directly via `dnx` without installing the tool globally:
+
+```powershell
+$env:OURA_CLIENT_ID = "<your-client-id>"
+$env:OURA_CLIENT_SECRET = "<your-client-secret>"
+dnx -y gjlumsden.OuraMcp -- login
+```
+
+</details>
 
 Tokens are saved to `~/.oura-mcp/tokens.json`. You only need to do this once — the server refreshes tokens automatically on subsequent runs.
 
@@ -168,7 +179,7 @@ Most date-range tools accept optional `startDate` and `endDate` parameters (form
 
 This server uses an **`az login`-style CLI authentication** pattern, similar to the [Azure MCP Server](https://github.com/Azure/azure-mcp):
 
-1. **One-time login:** Run `oura-mcp login` (or `dotnet run --project src/OuraMcp -- login` from source) to open your browser to the Oura OAuth consent screen.
+1. **One-time login:** Run `oura-mcp login` (or `dnx -y gjlumsden.OuraMcp -- login` for the no-install option, or `dotnet run --project src/OuraMcp -- login` from source) to open your browser to the Oura OAuth consent screen.
 2. **Token exchange:** After you authorize, a local callback server on `http://localhost:8742/callback/` receives the authorization code and exchanges it for access/refresh tokens.
 3. **Persistent storage:** Tokens are saved to `~/.oura-mcp/tokens.json` (file permissions restricted to owner on Unix).
 4. **Automatic refresh:** On startup the server loads saved tokens and refreshes them automatically when expired.
