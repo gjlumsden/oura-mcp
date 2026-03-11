@@ -1,6 +1,8 @@
 using System.Net;
 using System.Text.Json;
 using FluentAssertions;
+using Microsoft.Extensions.Logging;
+using ModelContextProtocol;
 using Moq;
 using Moq.Protected;
 using OuraMcp.Auth;
@@ -16,6 +18,7 @@ public class OuraApiClientTests
     private readonly Mock<IHttpClientFactory> _httpClientFactory = new();
     private readonly Mock<IOuraTokenService> _tokenService = new();
     private readonly Mock<HttpMessageHandler> _httpHandler = new();
+    private readonly Mock<ILogger<OuraApiClient>> _logger = new();
 
     private OuraApiClient CreateClient()
     {
@@ -31,7 +34,7 @@ public class OuraApiClientTests
             .Setup(t => t.GetAccessTokenAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(FakeToken);
 
-        return new OuraApiClient(_httpClientFactory.Object, _tokenService.Object);
+        return new OuraApiClient(_httpClientFactory.Object, _tokenService.Object, _logger.Object);
     }
 
     private void SetupHttpResponse(HttpStatusCode statusCode, string content)
@@ -235,7 +238,7 @@ public class OuraApiClientTests
     }
 
     [Fact]
-    public async Task ApiCall_403Response_ThrowsMeaningfulException()
+    public async Task ApiCall_403Response_ThrowsMcpExceptionWithFriendlyMessage()
     {
         var forbiddenJson = """{"detail":"Subscription expired"}""";
         SetupHttpResponse(HttpStatusCode.Forbidden, forbiddenJson);
@@ -243,8 +246,41 @@ public class OuraApiClientTests
 
         var act = () => client.GetPersonalInfoAsync();
 
-        await act.Should().ThrowAsync<HttpRequestException>()
-            .Where(e => e.Message.Contains("403") || e.Message.Contains("Forbidden") || e.Message.Contains("Subscription"));
+        await act.Should().ThrowAsync<McpException>()
+            .Where(e => e.Message.Contains("Access denied") && e.Message.Contains("subscription"));
+    }
+
+    [Fact]
+    public async Task CollectionEndpoint_NullDataArray_ReturnsEmptyList()
+    {
+        SetupHttpResponse(HttpStatusCode.OK, """{"data":null,"next_token":null}""");
+        var client = CreateClient();
+
+        var result = await client.GetDailyActivityAsync();
+
+        result.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task CollectionEndpoint_EmptyDataArray_ReturnsEmptyList()
+    {
+        SetupHttpResponse(HttpStatusCode.OK, """{"data":[],"next_token":null}""");
+        var client = CreateClient();
+
+        var result = await client.GetDailyActivityAsync();
+
+        result.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task CollectionEndpoint_NullResponseBody_ThrowsMcpException()
+    {
+        SetupHttpResponse(HttpStatusCode.OK, "null");
+        var client = CreateClient();
+
+        var act = () => client.GetDailyActivityAsync();
+
+        await act.Should().ThrowAsync<McpException>();
     }
 
     [Fact]

@@ -17,6 +17,7 @@ public class ToolAttributeTests
         typeof(WellnessTools),
         typeof(ProfileTools),
         typeof(TagTools),
+        typeof(DiagnosticTools),
     ];
 
     [Fact]
@@ -34,7 +35,8 @@ public class ToolAttributeTests
     {
         foreach (var toolType in AllToolTypes)
         {
-            var publicMethods = toolType.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
+            var publicMethods = toolType.GetMethods(
+                BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly);
 
             publicMethods.Should().NotBeEmpty(
                 because: $"{toolType.Name} should expose at least one tool method");
@@ -52,7 +54,8 @@ public class ToolAttributeTests
     {
         foreach (var toolType in AllToolTypes)
         {
-            var publicMethods = toolType.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
+            var publicMethods = toolType.GetMethods(
+                BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly);
 
             foreach (var method in publicMethods)
             {
@@ -67,7 +70,8 @@ public class ToolAttributeTests
     {
         foreach (var toolType in AllToolTypes)
         {
-            var publicMethods = toolType.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
+            var publicMethods = toolType.GetMethods(
+                BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly);
 
             foreach (var method in publicMethods)
             {
