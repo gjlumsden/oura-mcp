@@ -159,13 +159,11 @@ public class OuraApiClient : IOuraApiClient
             response = await SendAuthorizedAsync(url, accessToken, ct);
         }
 
-        // 403 → log a truncated response and throw a user-friendly MCP error
+        // 403 → log status and endpoint (no body to avoid leaking user data) and throw a user-friendly MCP error
         if (response.StatusCode == HttpStatusCode.Forbidden)
         {
-            var body = await response.Content.ReadAsStringAsync(ct);
             response.Dispose();
-            var truncatedBody = body.Length > 200 ? body[..200] + "..." : body;
-            _logger.LogError("Oura API returned 403 Forbidden for {Url}. Response (truncated): {Body}", url, truncatedBody);
+            _logger.LogError("Oura API returned 403 Forbidden for {Url}", url);
             throw new McpException(
                 $"Access denied for '{url}'. This usually means your Oura subscription has expired " +
                 "or your account doesn't have access to this data type. " +

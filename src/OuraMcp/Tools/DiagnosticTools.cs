@@ -10,13 +10,13 @@ namespace OuraMcp.Tools;
 public class DiagnosticTools
 {
     /// <summary>
-    /// Reads and returns the contents of the error log file at <c>~/.oura-mcp/logs/error.log</c>.
-    /// Returns the most recent entries, limited by the specified number of lines (default 100),
-    /// so the AI assistant can diagnose failures.
+    /// Reads and returns the contents of the rolling error log files at <c>~/.oura-mcp/logs/error*.log</c>.
+    /// Returns the most recent entries from the latest error log files, limited by the specified
+    /// number of lines (default 100), so the AI assistant can diagnose failures.
     /// </summary>
     [McpServerTool(Name = "get_error_log"), Description(
-        "Retrieves the oura-mcp error log. Use this to diagnose tool failures. " +
-        "Returns the most recent error entries from ~/.oura-mcp/logs/error.log.")]
+        "Retrieves the oura-mcp error log from the most recent rolling log files (error*.log) under ~/.oura-mcp/logs/. " +
+        "Use this to inspect recent error entries and diagnose tool failures.")]
     public static string GetErrorLog(
         [Description("Maximum number of lines to return from the end of the log. Defaults to 100.")] int? tailLines = null)
         => ReadErrorLog(OuraMcpPaths.LogDirectory, tailLines);
