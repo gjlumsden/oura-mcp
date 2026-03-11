@@ -9,30 +9,52 @@ public class ProgramTests
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "OuraMcp"));
 
     /// <summary>
-    /// Runs the OuraMcp project with the given arguments and an empty environment
-    /// (no OURA_CLIENT_ID / OURA_CLIENT_SECRET) so the friendly validation fires.
+    /// Runs the OuraMcp project as a subprocess and captures stderr.
+    /// Uses <c>dotnet run</c> (with build) to avoid Debug/Release mismatch in CI.
+    /// Drains stdout concurrently to prevent deadlocks and kills the process on timeout.
     /// </summary>
     private static async Task<(int ExitCode, string Stderr)> RunAsync(
-        string arguments = "", int timeoutMs = 15_000)
+        string arguments = "",
+        Dictionary<string, string?>? envOverrides = null,
+        int timeoutMs = 30_000)
     {
         var psi = new ProcessStartInfo
         {
             FileName = "dotnet",
-            Arguments = $"run --no-build --project \"{ProjectPath}\" -- {arguments}",
+            Arguments = $"run --project \"{ProjectPath}\" -- {arguments}",
             RedirectStandardError = true,
             RedirectStandardOutput = true,
             UseShellExecute = false,
             CreateNoWindow = true
         };
 
-        // Clear OAuth env vars so the validation triggers
+        // Apply env var overrides (default: clear both OAuth vars)
         psi.Environment["OURA_CLIENT_ID"] = "";
         psi.Environment["OURA_CLIENT_SECRET"] = "";
+        if (envOverrides is not null)
+        {
+            foreach (var (key, value) in envOverrides)
+                psi.Environment[key] = value;
+        }
 
         using var process = Process.Start(psi)!;
-        var stderr = await process.StandardError.ReadToEndAsync();
-        await process.WaitForExitAsync(new CancellationTokenSource(timeoutMs).Token);
 
+        // Drain stdout concurrently to prevent deadlocks
+        var stdoutTask = process.StandardOutput.ReadToEndAsync();
+        var stderrTask = process.StandardError.ReadToEndAsync();
+
+        using var cts = new CancellationTokenSource(timeoutMs);
+        try
+        {
+            await process.WaitForExitAsync(cts.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            process.Kill(entireProcessTree: true);
+            throw new TimeoutException($"Process did not exit within {timeoutMs}ms");
+        }
+
+        var stderr = await stderrTask;
         return (process.ExitCode, stderr);
     }
 
@@ -44,7 +66,6 @@ public class ProgramTests
         exitCode.Should().NotBe(0);
         stderr.Should().Contain("OURA_CLIENT_ID");
         stderr.Should().Contain("OURA_CLIENT_SECRET");
-        stderr.Should().Contain("export");
         stderr.Should().NotContain("Unhandled exception");
         stderr.Should().NotContain("System.InvalidOperationException");
     }
@@ -52,24 +73,10 @@ public class ProgramTests
     [Fact]
     public async Task MissingClientId_PrintsFriendlyError()
     {
-        var psi = new ProcessStartInfo
-        {
-            FileName = "dotnet",
-            Arguments = $"run --no-build --project \"{ProjectPath}\"",
-            RedirectStandardError = true,
-            RedirectStandardOutput = true,
-            UseShellExecute = false,
-            CreateNoWindow = true
-        };
+        var (exitCode, stderr) = await RunAsync(
+            envOverrides: new() { ["OURA_CLIENT_SECRET"] = "some-secret" });
 
-        psi.Environment["OURA_CLIENT_ID"] = "";
-        psi.Environment["OURA_CLIENT_SECRET"] = "some-secret";
-
-        using var process = Process.Start(psi)!;
-        var stderr = await process.StandardError.ReadToEndAsync();
-        await process.WaitForExitAsync(new CancellationTokenSource(15_000).Token);
-
-        process.ExitCode.Should().NotBe(0);
+        exitCode.Should().NotBe(0);
         stderr.Should().Contain("OURA_CLIENT_ID");
         stderr.Should().NotContain("OURA_CLIENT_SECRET", "only the missing var should be listed");
         stderr.Should().NotContain("Unhandled exception");
@@ -78,24 +85,10 @@ public class ProgramTests
     [Fact]
     public async Task MissingClientSecret_PrintsFriendlyError()
     {
-        var psi = new ProcessStartInfo
-        {
-            FileName = "dotnet",
-            Arguments = $"run --no-build --project \"{ProjectPath}\"",
-            RedirectStandardError = true,
-            RedirectStandardOutput = true,
-            UseShellExecute = false,
-            CreateNoWindow = true
-        };
+        var (exitCode, stderr) = await RunAsync(
+            envOverrides: new() { ["OURA_CLIENT_ID"] = "some-id" });
 
-        psi.Environment["OURA_CLIENT_ID"] = "some-id";
-        psi.Environment["OURA_CLIENT_SECRET"] = "";
-
-        using var process = Process.Start(psi)!;
-        var stderr = await process.StandardError.ReadToEndAsync();
-        await process.WaitForExitAsync(new CancellationTokenSource(15_000).Token);
-
-        process.ExitCode.Should().NotBe(0);
+        exitCode.Should().NotBe(0);
         stderr.Should().Contain("OURA_CLIENT_SECRET");
         stderr.Should().NotContain("OURA_CLIENT_ID", "only the missing var should be listed");
         stderr.Should().NotContain("Unhandled exception");

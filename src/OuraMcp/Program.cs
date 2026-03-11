@@ -8,6 +8,7 @@ using OuraMcp.Auth;
 using OuraMcp.OuraClient;
 
 var builder = Host.CreateApplicationBuilder(args);
+var debugMode = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("OURA_DEBUG"));
 
 // Logging: route console output to stderr so it doesn't interfere with stdio transport
 builder.Logging.AddConsole(options =>
@@ -17,18 +18,14 @@ builder.Logging.AddConsole(options =>
 var clientId = builder.Configuration["OURA_CLIENT_ID"];
 var clientSecret = builder.Configuration["OURA_CLIENT_SECRET"];
 var missingVars = new List<string>();
-if (string.IsNullOrEmpty(clientId)) missingVars.Add("OURA_CLIENT_ID");
-if (string.IsNullOrEmpty(clientSecret)) missingVars.Add("OURA_CLIENT_SECRET");
+if (string.IsNullOrWhiteSpace(clientId)) missingVars.Add("OURA_CLIENT_ID");
+if (string.IsNullOrWhiteSpace(clientSecret)) missingVars.Add("OURA_CLIENT_SECRET");
 
 if (missingVars.Count > 0)
 {
     Console.Error.WriteLine($"Error: Required environment variable(s) not set: {string.Join(", ", missingVars)}");
-    Console.Error.WriteLine("Set them before running oura-mcp. For example:");
-    Console.Error.WriteLine();
-    foreach (var v in missingVars)
-        Console.Error.WriteLine($"  export {v}=<your-value>");
-    Console.Error.WriteLine();
-    Console.Error.WriteLine("See https://github.com/gjlumsden/oura-mcp#setup for details.");
+    Console.Error.WriteLine("Set them as environment variables before running 'oura-mcp'.");
+    Console.Error.WriteLine("See https://github.com/gjlumsden/oura-mcp#getting-started for details.");
     Environment.Exit(1);
 }
 
@@ -79,6 +76,7 @@ if (args.Contains("login"))
     catch (Exception ex)
     {
         Console.Error.WriteLine($"Error: Login failed. {ex.Message}");
+        if (debugMode) Console.Error.WriteLine(ex.ToString());
         Console.Error.WriteLine("If the problem persists, try running 'oura-mcp login' again.");
         Environment.Exit(1);
     }
@@ -93,6 +91,7 @@ try
 catch (Exception ex)
 {
     Console.Error.WriteLine($"Error: {ex.Message}");
+    if (debugMode) Console.Error.WriteLine(ex.ToString());
     Environment.Exit(1);
 }
 
