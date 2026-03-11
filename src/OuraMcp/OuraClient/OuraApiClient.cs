@@ -92,7 +92,7 @@ public class OuraApiClient : IOuraApiClient
 
     private async Task<T> GetSingleAsync<T>(string path, CancellationToken ct)
     {
-        var response = await SendWithRetryAsync(path, ct);
+        using var response = await SendWithRetryAsync(path, ct);
 
         var json = await response.Content.ReadAsStringAsync(ct);
 
@@ -109,14 +109,17 @@ public class OuraApiClient : IOuraApiClient
         do
         {
             var url = BuildCollectionUrl(basePath, startDate, endDate, nextToken);
-            var response = await SendWithRetryAsync(url, ct);
+            using var response = await SendWithRetryAsync(url, ct);
 
             var json = await response.Content.ReadAsStringAsync(ct);
             var collection = JsonSerializer.Deserialize<OuraCollectionResponse<T>>(json, JsonOptions);
 
             if (collection is null)
             {
-                _logger.LogError("Failed to deserialize collection response from {Path}. Body: {Body}", basePath, json);
+                var truncatedBody = json.Length <= 512 ? json : json[..512];
+                _logger.LogError(
+                    "Failed to deserialize collection response from {Path}. Body (truncated): {Body}",
+                    basePath, truncatedBody);
                 break;
             }
 

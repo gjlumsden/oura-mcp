@@ -6,15 +6,10 @@ namespace OuraMcp.Tests.Tools;
 public class DiagnosticToolsTests : IDisposable
 {
     private readonly string _tempLogDir;
-    private readonly string _originalLogDir;
 
     public DiagnosticToolsTests()
     {
         _tempLogDir = Path.Combine(Path.GetTempPath(), $"oura-mcp-log-test-{Guid.NewGuid():N}");
-        Directory.CreateDirectory(_tempLogDir);
-
-        // Capture original value to restore later
-        _originalLogDir = OuraMcpPaths.LogDirectory;
     }
 
     public void Dispose()
@@ -25,26 +20,45 @@ public class DiagnosticToolsTests : IDisposable
     }
 
     [Fact]
-    public void GetErrorLog_NoLogDirectory_ReturnsNoErrorsMessage()
+    public void ReadErrorLog_NoLogDirectory_ReturnsNoErrorsMessage()
     {
-        // DiagnosticTools reads from OuraMcpPaths.LogDirectory which is a static path.
-        // When the directory doesn't exist, it should return a friendly message.
-        var result = DiagnosticTools.GetErrorLog();
+        var result = DiagnosticTools.ReadErrorLog(_tempLogDir);
 
-        // The real log dir may or may not exist on the test machine,
-        // but the result should never be null or throw
-        result.Should().NotBeNull();
+        result.Should().Contain("No error log directory found");
     }
 
     [Fact]
-    public void GetErrorLog_EmptyLogFile_ReturnsNoErrorsMessage()
+    public void ReadErrorLog_EmptyLogFile_ReturnsEmptyMessage()
     {
-        var logFile = Path.Combine(_tempLogDir, "error.log");
-        File.WriteAllText(logFile, "");
+        Directory.CreateDirectory(_tempLogDir);
+        File.WriteAllText(Path.Combine(_tempLogDir, "error.log"), "");
 
-        // We can't redirect the static path, but we verify the tool handles
-        // missing/empty gracefully by checking it doesn't throw
-        var result = DiagnosticTools.GetErrorLog();
-        result.Should().NotBeNull();
+        var result = DiagnosticTools.ReadErrorLog(_tempLogDir);
+
+        result.Should().Contain("Error log is empty");
+    }
+
+    [Fact]
+    public void ReadErrorLog_WithEntries_ReturnsTailLines()
+    {
+        Directory.CreateDirectory(_tempLogDir);
+        var lines = Enumerable.Range(1, 200).Select(i => $"Line {i}").ToArray();
+        File.WriteAllLines(Path.Combine(_tempLogDir, "error.log"), lines);
+
+        var result = DiagnosticTools.ReadErrorLog(_tempLogDir, tailLines: 5);
+
+        result.Should().Contain("Line 200");
+        result.Should().Contain("Line 196");
+        result.Should().NotContain("Line 1\n");
+    }
+
+    [Fact]
+    public void ReadErrorLog_NoLogFiles_ReturnsNoFilesMessage()
+    {
+        Directory.CreateDirectory(_tempLogDir);
+
+        var result = DiagnosticTools.ReadErrorLog(_tempLogDir);
+
+        result.Should().Contain("No error log files found");
     }
 }

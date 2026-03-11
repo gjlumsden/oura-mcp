@@ -11,24 +11,29 @@ public class DiagnosticTools
 {
     /// <summary>
     /// Reads and returns the contents of the error log file at <c>~/.oura-mcp/logs/error.log</c>.
-    /// Returns the most recent entries (up to 50 KB) so the AI assistant can diagnose failures.
+    /// Returns the most recent entries, limited by the specified number of lines (default 100),
+    /// so the AI assistant can diagnose failures.
     /// </summary>
     [McpServerTool(Name = "get_error_log"), Description(
         "Retrieves the oura-mcp error log. Use this to diagnose tool failures. " +
         "Returns the most recent error entries from ~/.oura-mcp/logs/error.log.")]
     public static string GetErrorLog(
         [Description("Maximum number of lines to return from the end of the log. Defaults to 100.")] int? tailLines = null)
-    {
-        var logPath = OuraMcpPaths.ErrorLogPath;
-        var logDir = OuraMcpPaths.LogDirectory;
+        => ReadErrorLog(OuraMcpPaths.LogDirectory, tailLines);
 
-        if (!Directory.Exists(logDir))
+    /// <summary>
+    /// Reads error log entries from the specified log directory. Separated from the tool
+    /// method to allow testing with a custom directory.
+    /// </summary>
+    internal static string ReadErrorLog(string logDirectory, int? tailLines = null)
+    {
+        if (!Directory.Exists(logDirectory))
         {
             return "No error log directory found. No errors have been recorded yet.";
         }
 
         // Find the most recent log file (Serilog rolling adds date suffixes)
-        var logFiles = Directory.GetFiles(logDir, "error*.log")
+        var logFiles = Directory.GetFiles(logDirectory, "error*.log")
             .OrderByDescending(File.GetLastWriteTimeUtc)
             .ToList();
 
@@ -37,7 +42,7 @@ public class DiagnosticTools
             return "No error log files found. No errors have been recorded yet.";
         }
 
-        var maxLines = tailLines ?? 100;
+        var maxLines = Math.Clamp(tailLines ?? 100, 1, 1000);
         var lines = new List<string>();
 
         // Read from most recent file(s) until we have enough lines
