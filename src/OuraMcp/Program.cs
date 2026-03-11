@@ -61,7 +61,7 @@ if (args.Contains("login"))
 {
     try
     {
-        var host = builder.Build();
+        using var host = builder.Build();
         var options = host.Services.GetRequiredService<IOptions<OuraOAuthOptions>>().Value;
         var tokenService = host.Services.GetRequiredService<IOuraTokenService>();
         using var listener = new HttpCallbackListener();
@@ -78,22 +78,25 @@ if (args.Contains("login"))
         Console.Error.WriteLine($"Error: Login failed. {ex.Message}");
         if (debugMode) Console.Error.WriteLine(ex.ToString());
         Console.Error.WriteLine("If the problem persists, try running 'oura-mcp login' again.");
-        Environment.Exit(1);
+        return 1;
     }
 
-    return;
+    return 0;
 }
 
 try
 {
-    await builder.Build().RunAsync();
+    using var host = builder.Build();
+    await host.RunAsync();
 }
 catch (Exception ex)
 {
     Console.Error.WriteLine($"Error: {ex.Message}");
     if (debugMode) Console.Error.WriteLine(ex.ToString());
-    Environment.Exit(1);
+    return 1;
 }
+
+return 0;
 
 /// <summary>
 /// Partial class declaration to make the entry point accessible for integration tests.

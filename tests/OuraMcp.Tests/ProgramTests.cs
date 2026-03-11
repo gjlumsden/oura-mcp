@@ -37,25 +37,31 @@ public class ProgramTests
                 psi.Environment[key] = value;
         }
 
-        using var process = Process.Start(psi)!;
+        var process = Process.Start(psi)
+            ?? throw new InvalidOperationException(
+                $"Failed to start process '{psi.FileName}' with arguments '{psi.Arguments}'.");
 
-        // Drain stdout concurrently to prevent deadlocks
-        var stdoutTask = process.StandardOutput.ReadToEndAsync();
-        var stderrTask = process.StandardError.ReadToEndAsync();
-
-        using var cts = new CancellationTokenSource(timeoutMs);
-        try
+        using (process)
         {
-            await process.WaitForExitAsync(cts.Token);
-        }
-        catch (OperationCanceledException)
-        {
-            process.Kill(entireProcessTree: true);
-            throw new TimeoutException($"Process did not exit within {timeoutMs}ms");
-        }
+            // Drain stdout and stderr concurrently to prevent deadlocks
+            var stdoutTask = process.StandardOutput.ReadToEndAsync();
+            var stderrTask = process.StandardError.ReadToEndAsync();
 
-        var stderr = await stderrTask;
-        return (process.ExitCode, stderr);
+            using var cts = new CancellationTokenSource(timeoutMs);
+            try
+            {
+                await process.WaitForExitAsync(cts.Token);
+            }
+            catch (OperationCanceledException)
+            {
+                process.Kill(entireProcessTree: true);
+                throw new TimeoutException($"Process did not exit within {timeoutMs}ms");
+            }
+
+            var stderr = await stderrTask;
+            await stdoutTask;
+            return (process.ExitCode, stderr);
+        }
     }
 
     [Fact]
