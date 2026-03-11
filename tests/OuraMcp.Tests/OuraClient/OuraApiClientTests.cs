@@ -273,14 +273,14 @@ public class OuraApiClientTests
     }
 
     [Fact]
-    public async Task CollectionEndpoint_NullResponseBody_ReturnsEmptyList()
+    public async Task CollectionEndpoint_NullResponseBody_ThrowsMcpException()
     {
         SetupHttpResponse(HttpStatusCode.OK, "null");
         var client = CreateClient();
 
-        var result = await client.GetDailyActivityAsync();
+        var act = () => client.GetDailyActivityAsync();
 
-        result.Should().BeEmpty();
+        await act.Should().ThrowAsync<McpException>();
     }
 
     [Fact]

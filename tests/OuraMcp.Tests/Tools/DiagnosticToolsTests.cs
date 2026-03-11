@@ -49,7 +49,9 @@ public class DiagnosticToolsTests : IDisposable
 
         result.Should().Contain("Line 200");
         result.Should().Contain("Line 196");
-        result.Should().NotContain("Line 1\n");
+        var resultLines = result.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+        resultLines.Should().HaveCount(5);
+        resultLines.Should().NotContain("Line 1");
     }
 
     [Fact]

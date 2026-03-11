@@ -52,7 +52,11 @@ public class DiagnosticTools
             {
                 using var stream = new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
                 using var reader = new StreamReader(stream);
-                var fileLines = reader.ReadToEnd().Split('\n');
+                var fileLines = reader
+                    .ReadToEnd()
+                    .Split('\n')
+                    .Select(l => l.TrimEnd('\r'))
+                    .ToArray();
                 lines.InsertRange(0, fileLines);
 
                 if (lines.Count >= maxLines)

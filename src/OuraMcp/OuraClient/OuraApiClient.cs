@@ -120,7 +120,9 @@ public class OuraApiClient : IOuraApiClient
                 _logger.LogError(
                     "Failed to deserialize collection response from {Path}. Body (truncated): {Body}",
                     basePath, truncatedBody);
-                break;
+                throw new McpException(
+                    $"Oura API returned an unexpected response while fetching collection data " +
+                    $"from '{basePath}'. The response could not be deserialized.");
             }
 
             if (collection.Data is not null)
