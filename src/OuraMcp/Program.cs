@@ -4,14 +4,31 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using ModelContextProtocol.Server;
+using OuraMcp;
 using OuraMcp.Auth;
 using OuraMcp.OuraClient;
+using Serilog;
+using Serilog.Events;
+
+var errorLogPath = OuraMcpPaths.ErrorLogPath;
 
 var builder = Host.CreateApplicationBuilder(args);
 
 // Logging: route console output to stderr so it doesn't interfere with stdio transport
 builder.Logging.AddConsole(options =>
     options.LogToStandardErrorThreshold = LogLevel.Trace);
+
+// File logging: persist errors to ~/.oura-mcp/logs/error.log for diagnostics
+builder.Services.AddSerilog(config => config
+    .MinimumLevel.Error()
+    .WriteTo.File(
+        path: errorLogPath,
+        restrictedToMinimumLevel: LogEventLevel.Error,
+        outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {SourceContext}{NewLine}  {Message:lj}{NewLine}{Exception}{NewLine}",
+        rollingInterval: RollingInterval.Day,
+        retainedFileCountLimit: 7,
+        fileSizeLimitBytes: 5 * 1024 * 1024,
+        shared: true));
 
 // Configuration
 builder.Services.Configure<OuraOAuthOptions>(opts =>

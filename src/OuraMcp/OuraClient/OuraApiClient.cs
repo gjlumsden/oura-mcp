@@ -1,6 +1,8 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Text.Json;
+using Microsoft.Extensions.Logging;
+using ModelContextProtocol;
 using OuraMcp.Auth;
 using OuraMcp.OuraClient.Models;
 
@@ -14,16 +16,18 @@ public class OuraApiClient : IOuraApiClient
 {
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly IOuraTokenService _tokenService;
+    private readonly ILogger<OuraApiClient> _logger;
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         PropertyNameCaseInsensitive = false
     };
 
-    public OuraApiClient(IHttpClientFactory httpClientFactory, IOuraTokenService tokenService)
+    public OuraApiClient(IHttpClientFactory httpClientFactory, IOuraTokenService tokenService, ILogger<OuraApiClient> logger)
     {
         _httpClientFactory = httpClientFactory;
         _tokenService = tokenService;
+        _logger = logger;
     }
 
     // ── Single-object endpoints ──────────────────────────────────────
@@ -108,10 +112,19 @@ public class OuraApiClient : IOuraApiClient
             var response = await SendWithRetryAsync(url, ct);
 
             var json = await response.Content.ReadAsStringAsync(ct);
-            var collection = JsonSerializer.Deserialize<OuraCollectionResponse<T>>(json, JsonOptions)
-                ?? throw new InvalidOperationException($"Failed to deserialize collection from {basePath}");
+            var collection = JsonSerializer.Deserialize<OuraCollectionResponse<T>>(json, JsonOptions);
 
-            allItems.AddRange(collection.Data);
+            if (collection is null)
+            {
+                _logger.LogError("Failed to deserialize collection response from {Path}. Body: {Body}", basePath, json);
+                break;
+            }
+
+            if (collection.Data is not null)
+            {
+                allItems.AddRange(collection.Data);
+            }
+
             nextToken = collection.NextToken;
         }
         while (nextToken is not null);
@@ -139,11 +152,15 @@ public class OuraApiClient : IOuraApiClient
             response = await SendAuthorizedAsync(url, accessToken, ct);
         }
 
-        // 403 → throw with meaningful message
+        // 403 → log the raw response and throw a user-friendly MCP error
         if (response.StatusCode == HttpStatusCode.Forbidden)
         {
             var body = await response.Content.ReadAsStringAsync(ct);
-            throw new HttpRequestException($"403 Forbidden: {body}");
+            _logger.LogError("Oura API returned 403 Forbidden for {Url}. Response: {Body}", url, body);
+            throw new McpException(
+                $"Access denied for '{url}'. This usually means your Oura subscription has expired " +
+                "or your account doesn't have access to this data type. " +
+                "Check your subscription status in the Oura app.");
         }
 
         response.EnsureSuccessStatusCode();
