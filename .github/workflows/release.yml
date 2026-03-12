@@ -9,7 +9,8 @@ permissions:
   id-token: write
 
 jobs:
-  release:
+  # ── Build & Test ───────────────────────────────────────
+  build:
     runs-on: ubuntu-latest
 
     steps:
@@ -40,21 +41,39 @@ jobs:
       - name: Pack with version
         run: dotnet pack src/OuraMcp/OuraMcp.csproj --no-build -c Release -o ./nupkg -p:Version=${{ steps.version.outputs.VERSION }}
 
-      # TODO: Add Azure Trusted Signing when identity validation is complete
-      # - name: Install signing tool
-      #   run: dotnet tool install --global sign
-      # - name: Azure login
-      #   uses: azure/login@v2
-      #   with:
-      #     client-id: ${{ secrets.AZURE_CLIENT_ID }}
-      #     tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-      #     subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-      # - name: Sign NuGet package
-      #   run: |
-      #     sign code trusted-signing ./nupkg/*.nupkg `
-      #       --trusted-signing-endpoint ${{ secrets.SIGNING_ENDPOINT }} `
-      #       --trusted-signing-account ${{ secrets.SIGNING_ACCOUNT }} `
-      #       --trusted-signing-certificate-profile ${{ secrets.SIGNING_CERT_PROFILE }}
+      - name: Upload unsigned package
+        uses: actions/upload-artifact@v4
+        with:
+          name: nupkg-unsigned
+          path: ./nupkg/*.nupkg
+
+  # ── Sign (via centralised code-signing repo) ───────────
+  sign:
+    needs: build
+    uses: gjlumsden/code-signing/.github/workflows/sign.yml@main
+    with:
+      artifact-name: nupkg-unsigned
+      file-filter: '*.nupkg'
+
+  # ── Publish & Release ──────────────────────────────────
+  publish:
+    needs: sign
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download signed package
+        uses: actions/download-artifact@v4
+        with:
+          name: nupkg-unsigned-signed
+          path: ./nupkg
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Verify NuGet signature
+        run: dotnet nuget verify ./nupkg/*.nupkg || echo "::warning::Signature verification failed — package may not be signed yet (identity validation pending)"
 
       - name: NuGet login (Trusted Publishing via OIDC)
         uses: NuGet/login@v1
