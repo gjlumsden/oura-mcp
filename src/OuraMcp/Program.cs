@@ -62,7 +62,15 @@ builder.Services.AddDataProtection()
 
 // HTTP Clients — "OuraApi" includes standard resilience (retry, circuit breaker, timeouts via Polly)
 builder.Services.AddHttpClient("OuraApi", c => c.BaseAddress = new Uri("https://api.ouraring.com"))
-    .AddStandardResilienceHandler();
+    .AddStandardResilienceHandler(options =>
+    {
+        options.Retry.MaxRetryAttempts = 3;
+        options.Retry.BackoffType = Polly.DelayBackoffType.Exponential;
+        options.Retry.UseJitter = true;
+        options.Retry.Delay = TimeSpan.FromSeconds(2);
+        options.TotalRequestTimeout.Timeout = TimeSpan.FromSeconds(30);
+        options.AttemptTimeout.Timeout = TimeSpan.FromSeconds(10);
+    });
 builder.Services.AddHttpClient("OuraAuth", c => c.BaseAddress = new Uri("https://api.ouraring.com"));
 
 // Services

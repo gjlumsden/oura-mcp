@@ -323,7 +323,7 @@ public class OuraApiClientTests
     // ── Error handling tests ─────────────────────────────────────────
 
     [Fact]
-    public async Task ApiCall_NetworkError_PropagatesException()
+    public async Task ApiCall_NetworkError_ThrowsMcpExceptionAndLogs()
     {
         _httpHandler.Protected()
             .Setup<Task<HttpResponseMessage>>(
@@ -335,7 +335,16 @@ public class OuraApiClientTests
 
         var act = () => client.GetPersonalInfoAsync();
 
-        await act.Should().ThrowAsync<HttpRequestException>();
+        var ex = await act.Should().ThrowAsync<McpException>();
+        ex.Which.Message.Should().Contain("Failed to reach the Oura API");
+        _logger.Verify(
+            x => x.Log(
+                LogLevel.Error,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((o, _) => o.ToString()!.Contains("request failed")),
+                It.IsAny<HttpRequestException>(),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+            Times.Once);
     }
 
     [Fact]

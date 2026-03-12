@@ -177,7 +177,17 @@ public class OuraApiClient : IOuraApiClient
                 "Unable to authenticate with Oura. Run 'oura-mcp login' to re-authenticate.");
         }
 
-        var response = await SendAuthorizedAsync(url, accessToken, ct);
+        HttpResponseMessage response;
+        try
+        {
+            response = await SendAuthorizedAsync(url, accessToken, ct);
+        }
+        catch (Exception ex) when (ex is HttpRequestException || (ex is OperationCanceledException && !ct.IsCancellationRequested))
+        {
+            _logger.LogError(ex, "Oura API request failed for {Url} after resilience retries", url);
+            throw new McpException(
+                "Failed to reach the Oura API. Check your network connection and try again.");
+        }
 
         // 401 → re-fetch token (may trigger refresh inside token service) and retry once
         if (response.StatusCode == HttpStatusCode.Unauthorized)
@@ -194,7 +204,16 @@ public class OuraApiClient : IOuraApiClient
                     "Authentication failed after token refresh. Run 'oura-mcp login' to re-authenticate.");
             }
 
-            response = await SendAuthorizedAsync(url, accessToken, ct);
+            try
+            {
+                response = await SendAuthorizedAsync(url, accessToken, ct);
+            }
+            catch (Exception ex) when (ex is HttpRequestException || (ex is OperationCanceledException && !ct.IsCancellationRequested))
+            {
+                _logger.LogError(ex, "Oura API request failed for {Url} after token refresh", url);
+                throw new McpException(
+                    "Failed to reach the Oura API. Check your network connection and try again.");
+            }
         }
 
         // 403 → subscription or permission issue (not transient — don't retry)
