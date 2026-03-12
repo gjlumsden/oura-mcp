@@ -48,7 +48,7 @@ public class ResilienceConfigurationTests
         var factory = host.Services.GetRequiredService<IHttpClientFactory>();
         var client = factory.CreateClient("OuraApi");
 
-        var response = await client.GetAsync("/v2/usercollection/personal_info");
+        using var response = await client.GetAsync("/v2/usercollection/personal_info");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         callCount.Should().Be(2);
@@ -68,6 +68,7 @@ public class ResilienceConfigurationTests
         options.CircuitBreaker.FailureRatio.Should().Be(0.1);
         options.CircuitBreaker.MinimumThroughput.Should().Be(100);
         options.CircuitBreaker.BreakDuration.Should().Be(TimeSpan.FromSeconds(5));
+        options.CircuitBreaker.SamplingDuration.Should().Be(TimeSpan.FromSeconds(30));
         options.TotalRequestTimeout.Timeout.Should().Be(TimeSpan.FromSeconds(30));
         options.AttemptTimeout.Timeout.Should().Be(TimeSpan.FromSeconds(10));
     }
