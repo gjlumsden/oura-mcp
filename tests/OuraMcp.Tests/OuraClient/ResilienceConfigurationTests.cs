@@ -3,6 +3,7 @@ using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Http.Resilience;
+using OuraMcp.OuraClient;
 using Polly;
 
 namespace OuraMcp.Tests.OuraClient;
@@ -13,7 +14,7 @@ public class ResilienceConfigurationTests
     public async Task OuraApiHttpClient_RetriesTransientErrors()
     {
         var callCount = 0;
-        var handler = new TestDelegatingHandler(() =>
+        var handler = new TestMessageHandler(() =>
         {
             callCount++;
             if (callCount == 1)
@@ -35,12 +36,11 @@ public class ResilienceConfigurationTests
             .ConfigurePrimaryHttpMessageHandler(() => handler);
         httpClientBuilder.AddStandardResilienceHandler(options =>
             {
-                options.Retry.MaxRetryAttempts = 3;
+                OuraResilienceDefaults.Configure(options);
+                // Override backoff for fast tests
                 options.Retry.BackoffType = DelayBackoffType.Constant;
                 options.Retry.Delay = TimeSpan.FromMilliseconds(1);
                 options.Retry.UseJitter = false;
-                options.AttemptTimeout.Timeout = TimeSpan.FromSeconds(10);
-                options.TotalRequestTimeout.Timeout = TimeSpan.FromSeconds(30);
                 options.CircuitBreaker.SamplingDuration = TimeSpan.FromSeconds(60);
             });
 
@@ -55,21 +55,19 @@ public class ResilienceConfigurationTests
     }
 
     [Fact]
-    public void ExplicitResilienceOptions_MatchDocumentedValues()
+    public void OuraResilienceDefaults_ConfiguresExpectedValues()
     {
         var options = new HttpStandardResilienceOptions();
 
-        options.Retry.MaxRetryAttempts = 3;
-        options.Retry.BackoffType = DelayBackoffType.Exponential;
-        options.Retry.UseJitter = true;
-        options.Retry.Delay = TimeSpan.FromSeconds(2);
-        options.TotalRequestTimeout.Timeout = TimeSpan.FromSeconds(30);
-        options.AttemptTimeout.Timeout = TimeSpan.FromSeconds(10);
+        OuraResilienceDefaults.Configure(options);
 
         options.Retry.MaxRetryAttempts.Should().Be(3);
         options.Retry.BackoffType.Should().Be(DelayBackoffType.Exponential);
         options.Retry.UseJitter.Should().BeTrue();
         options.Retry.Delay.Should().Be(TimeSpan.FromSeconds(2));
+        options.CircuitBreaker.FailureRatio.Should().Be(0.1);
+        options.CircuitBreaker.MinimumThroughput.Should().Be(100);
+        options.CircuitBreaker.BreakDuration.Should().Be(TimeSpan.FromSeconds(5));
         options.TotalRequestTimeout.Timeout.Should().Be(TimeSpan.FromSeconds(30));
         options.AttemptTimeout.Timeout.Should().Be(TimeSpan.FromSeconds(10));
     }
@@ -77,7 +75,7 @@ public class ResilienceConfigurationTests
     /// <summary>
     /// Test handler that returns responses from a factory function.
     /// </summary>
-    private sealed class TestDelegatingHandler(Func<HttpResponseMessage> responseFactory) : HttpMessageHandler
+    private sealed class TestMessageHandler(Func<HttpResponseMessage> responseFactory) : HttpMessageHandler
     {
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
             => Task.FromResult(responseFactory());
