@@ -50,7 +50,8 @@ jobs:
   # ── Sign (via centralised code-signing repo) ───────────
   sign:
     needs: build
-    uses: gjlumsden/code-signing/.github/workflows/sign.yml@main
+    # Pinned to a specific, reviewed commit SHA for reproducible, secure releases.
+    uses: gjlumsden/code-signing/.github/workflows/sign.yml@0d42660d5c1b00de8833095482c98aac4a6f2c4d
     with:
       artifact-name: nupkg-unsigned
       file-filter: '*.nupkg'
@@ -73,7 +74,17 @@ jobs:
           dotnet-version: '10.0.x'
 
       - name: Verify NuGet signature
-        run: dotnet nuget verify ./nupkg/*.nupkg || echo "::warning::Signature verification failed — package may not be signed yet (identity validation pending)"
+        shell: bash
+        run: |
+          # Fail on invalid/tampered signatures. Allow unsigned packages during
+          # the transition period (before identity validation completes).
+          output=$(dotnet nuget verify ./nupkg/*.nupkg 2>&1) && exit 0
+          if echo "$output" | grep -q "NU3004"; then
+            echo "::warning::Package is not signed (NU3004) — expected until identity validation completes"
+          else
+            echo "$output"
+            exit 1
+          fi
 
       - name: NuGet login (Trusted Publishing via OIDC)
         uses: NuGet/login@v1
