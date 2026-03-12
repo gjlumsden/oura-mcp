@@ -207,12 +207,26 @@ dotnet run --project src/OuraMcp -- login
 dotnet run --project src/OuraMcp
 ```
 
+## Caching
+
+The server includes **in-memory caching** to reduce redundant Oura API calls within a session. When an AI assistant calls the same tool with the same parameters, cached data is returned instead of hitting the API again.
+
+Cache is **in-memory only** — it's cleared automatically when the server process restarts. Different date ranges are cached independently.
+
+| TTL | Endpoints | Rationale |
+|-----|-----------|-----------|
+| **60 min** | Personal info, ring configuration | Rarely changes |
+| **15 min** | Sleep, readiness, sleep periods, sleep time | Can change (e.g., naps) but not often |
+| **10 min** | Activity, stress, resilience, workouts, sessions, SpO2, VO2 max, cardiovascular age, tags, rest mode | Day-anchored data that stabilises after logging |
+| **1 min** | Heart rate | High-frequency streaming data |
+
 ## Technology Stack
 
 - **.NET 10** / C# with nullable reference types
 - **ModelContextProtocol** NuGet package (MCP C# SDK) — STDIO transport
 - **System.Text.Json** for serialization
 - **IHttpClientFactory** for HTTP client lifecycle management
+- **IMemoryCache** for in-memory response caching with tiered TTLs
 
 ## License
 

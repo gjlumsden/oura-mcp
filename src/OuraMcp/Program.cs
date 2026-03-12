@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.DataProtection;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -66,7 +67,14 @@ builder.Services.AddHttpClient("OuraAuth", c => c.BaseAddress = new Uri("https:/
 // Services
 builder.Services.AddSingleton<IOuraTokenStore, FileTokenStore>();
 builder.Services.AddSingleton<IOuraTokenService, OuraTokenService>();
-builder.Services.AddScoped<IOuraApiClient, OuraApiClient>();
+builder.Services.AddMemoryCache();
+builder.Services.AddSingleton<CacheSettings>();
+builder.Services.AddScoped<OuraApiClient>();
+builder.Services.AddScoped<IOuraApiClient>(sp =>
+    new CachingOuraApiClient(
+        sp.GetRequiredService<OuraApiClient>(),
+        sp.GetRequiredService<IMemoryCache>(),
+        sp.GetRequiredService<CacheSettings>()));
 
 // MCP Server (stdio transport)
 builder.Services.AddMcpServer()
