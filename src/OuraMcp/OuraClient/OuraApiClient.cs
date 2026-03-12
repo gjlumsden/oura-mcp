@@ -182,7 +182,7 @@ public class OuraApiClient : IOuraApiClient
         {
             response = await SendAuthorizedAsync(url, accessToken, ct);
         }
-        catch (Exception ex) when (ex is HttpRequestException || (ex is OperationCanceledException && !ct.IsCancellationRequested))
+        catch (Exception ex) when (ex is not OperationCanceledException || !ct.IsCancellationRequested)
         {
             _logger.LogError(ex, "Oura API request failed for {Url} after resilience retries", url);
             throw new McpException(
@@ -208,7 +208,7 @@ public class OuraApiClient : IOuraApiClient
             {
                 response = await SendAuthorizedAsync(url, accessToken, ct);
             }
-            catch (Exception ex) when (ex is HttpRequestException || (ex is OperationCanceledException && !ct.IsCancellationRequested))
+            catch (Exception ex) when (ex is not OperationCanceledException || !ct.IsCancellationRequested)
             {
                 _logger.LogError(ex, "Oura API request failed for {Url} after token refresh", url);
                 throw new McpException(
