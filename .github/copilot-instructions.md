@@ -48,7 +48,7 @@ tests/OuraMcp.Tests/      # Unit/integration tests
 - **Callback:** Local `HttpListener` on `http://localhost:8742/callback/` receives the OAuth code.
 - **Token storage:** `~/.oura-mcp/tokens.json` (owner-only permissions on Unix).
 - **Refresh:** `OuraTokenService` checks expiry on each API call and refreshes automatically.
-- **Scopes:** `email personal daily session heartrate tag workout spo2 ring_configuration`
+- **Scopes:** `email personal daily session heartrate tag workout spo2 ring_configuration stress heart_health`
 - Tokens passed as `Authorization: Bearer <token>`.
 
 ## Distribution

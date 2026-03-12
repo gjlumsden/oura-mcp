@@ -21,5 +21,5 @@ public class OuraOAuthOptions
     public string TokenUrl { get; set; } = "https://api.ouraring.com/oauth/token";
 
     /// <summary>Space-delimited OAuth2 scopes requested from Oura.</summary>
-    public string Scopes { get; set; } = "email personal daily session heartrate tag workout spo2 ring_configuration";
+    public string Scopes { get; set; } = "email personal daily session heartrate tag workout spo2 ring_configuration stress heart_health";
 }

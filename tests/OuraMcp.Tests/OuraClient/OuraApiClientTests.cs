@@ -203,41 +203,6 @@ public class OuraApiClientTests
     }
 
     [Fact]
-    public async Task ApiCall_429Response_RespectsRateLimit()
-    {
-        var rateLimitJson = """{"detail":"Rate limit exceeded"}""";
-        var successJson = """
-            {"id":"abc","age":30,"weight":70.5,"height":175.0,"biological_sex":"male","email":"test@test.com"}
-            """;
-
-        var rateLimitResponse = new HttpResponseMessage
-        {
-            StatusCode = (HttpStatusCode)429,
-            Content = new StringContent(rateLimitJson, System.Text.Encoding.UTF8, "application/json")
-        };
-        rateLimitResponse.Headers.RetryAfter = new System.Net.Http.Headers.RetryConditionHeaderValue(TimeSpan.FromSeconds(1));
-
-        _httpHandler.Protected()
-            .SetupSequence<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<CancellationToken>())
-            .ReturnsAsync(rateLimitResponse)
-            .ReturnsAsync(new HttpResponseMessage
-            {
-                StatusCode = HttpStatusCode.OK,
-                Content = new StringContent(successJson, System.Text.Encoding.UTF8, "application/json")
-            });
-
-        var client = CreateClient();
-
-        var result = await client.GetPersonalInfoAsync();
-
-        result.Should().NotBeNull();
-        result.Id.Should().Be("abc");
-    }
-
-    [Fact]
     public async Task ApiCall_403Response_ThrowsMcpExceptionWithFriendlyMessage()
     {
         var forbiddenJson = """{"detail":"Subscription expired"}""";
@@ -371,12 +336,12 @@ public class OuraApiClientTests
         var act = () => client.GetPersonalInfoAsync();
 
         var ex = await act.Should().ThrowAsync<McpException>();
-        ex.Which.Message.Should().Contain("Failed to reach the Oura API");
+        ex.Which.Message.Should().Contain("failed after retries");
         _logger.Verify(
             x => x.Log(
                 LogLevel.Error,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((o, _) => o.ToString()!.Contains("Network error")),
+                It.Is<It.IsAnyType>((o, _) => o.ToString()!.Contains("request failed")),
                 It.IsAny<HttpRequestException>(),
                 It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.Once);
@@ -404,46 +369,6 @@ public class OuraApiClientTests
                 It.IsAny<Exception>(),
                 It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.Once);
-    }
-
-    [Theory]
-    [InlineData(HttpStatusCode.BadGateway)]
-    [InlineData(HttpStatusCode.ServiceUnavailable)]
-    [InlineData(HttpStatusCode.GatewayTimeout)]
-    public async Task ApiCall_TransientServerError_RetriesOnceThenThrows(HttpStatusCode statusCode)
-    {
-        SetupHttpResponseSequence(
-            (statusCode, "Server error"),
-            (statusCode, "Server error"));
-        var client = CreateClient();
-
-        var act = () => client.GetPersonalInfoAsync();
-
-        var ex = await act.Should().ThrowAsync<McpException>();
-        ex.Which.Message.Should().Contain("temporarily unavailable");
-        _httpHandler.Protected().Verify(
-            "SendAsync",
-            Times.Exactly(2),
-            ItExpr.IsAny<HttpRequestMessage>(),
-            ItExpr.IsAny<CancellationToken>());
-    }
-
-    [Theory]
-    [InlineData(HttpStatusCode.BadGateway)]
-    [InlineData(HttpStatusCode.ServiceUnavailable)]
-    [InlineData(HttpStatusCode.GatewayTimeout)]
-    public async Task ApiCall_TransientServerError_RetriesAndSucceeds(HttpStatusCode statusCode)
-    {
-        var successJson = """{"id":"abc","age":30,"weight":70.5,"height":175.0,"biological_sex":"male","email":"test@test.com"}""";
-        SetupHttpResponseSequence(
-            (statusCode, "Server error"),
-            (HttpStatusCode.OK, successJson));
-        var client = CreateClient();
-
-        var result = await client.GetPersonalInfoAsync();
-
-        result.Should().NotBeNull();
-        result.Id.Should().Be("abc");
     }
 
     [Fact]
@@ -525,21 +450,6 @@ public class OuraApiClientTests
                 It.IsAny<Exception>(),
                 It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.Once);
-    }
-
-    [Fact]
-    public async Task ApiCall_TransientThen403_Falls_ThroughToForbiddenHandler()
-    {
-        var forbiddenJson = """{"detail":"Subscription expired"}""";
-        SetupHttpResponseSequence(
-            (HttpStatusCode.BadGateway, "Server error"),
-            (HttpStatusCode.Forbidden, forbiddenJson));
-        var client = CreateClient();
-
-        var act = () => client.GetPersonalInfoAsync();
-
-        var ex = await act.Should().ThrowAsync<McpException>();
-        ex.Which.Message.Should().Contain("Access denied");
     }
 
     [Fact]

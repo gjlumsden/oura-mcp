@@ -220,6 +220,19 @@ Cache is **in-memory only** — it's cleared automatically when the server proce
 | **10 min** | Activity, stress, resilience, workouts, sessions, SpO2, VO2 max, cardiovascular age, tags, rest mode | Day-anchored data that stabilises after logging |
 | **1 min** | Heart rate | High-frequency streaming data |
 
+## Resilience
+
+All Oura API requests are protected by a **standard resilience pipeline** powered by [Polly](https://github.com/App-vNext/Polly) via `Microsoft.Extensions.Http.Resilience`:
+
+| Strategy | Configuration | Purpose |
+|----------|---------------|---------|
+| **Retry** | 3 attempts, exponential backoff + jitter | Handles 429 (rate limit), 500+, 408, and network errors |
+| **Circuit breaker** | Opens at 10% failure rate, 5s break | Prevents hammering a failing API |
+| **Attempt timeout** | 10s per request | Caps individual request duration |
+| **Total timeout** | 30s including retries | Caps end-to-end request duration |
+
+The resilience handler respects `Retry-After` headers from rate-limited responses. Auth errors (401) and permission errors (403) are handled separately by the client and are not retried.
+
 ## Technology Stack
 
 - **.NET 10** / C# with nullable reference types
@@ -227,6 +240,7 @@ Cache is **in-memory only** — it's cleared automatically when the server proce
 - **System.Text.Json** for serialization
 - **IHttpClientFactory** for HTTP client lifecycle management
 - **IMemoryCache** for in-memory response caching with tiered TTLs
+- **Microsoft.Extensions.Http.Resilience** (Polly) for retry, circuit breaker, and timeout policies
 
 ## License
 
