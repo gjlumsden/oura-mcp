@@ -60,8 +60,9 @@ builder.Services.AddDataProtection()
     .SetApplicationName("OuraMcp")
     .SetDefaultKeyLifetime(TimeSpan.FromDays(365));
 
-// HTTP Clients
-builder.Services.AddHttpClient("OuraApi", c => c.BaseAddress = new Uri("https://api.ouraring.com"));
+// HTTP Clients — "OuraApi" includes standard resilience (retry, circuit breaker, timeouts via Polly)
+builder.Services.AddHttpClient("OuraApi", c => c.BaseAddress = new Uri("https://api.ouraring.com"))
+    .AddStandardResilienceHandler();
 builder.Services.AddHttpClient("OuraAuth", c => c.BaseAddress = new Uri("https://api.ouraring.com"));
 
 // Services

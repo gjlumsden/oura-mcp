@@ -177,17 +177,7 @@ public class OuraApiClient : IOuraApiClient
                 "Unable to authenticate with Oura. Run 'oura-mcp login' to re-authenticate.");
         }
 
-        HttpResponseMessage response;
-        try
-        {
-            response = await SendAuthorizedAsync(url, accessToken, ct);
-        }
-        catch (Exception ex) when (ex is HttpRequestException || (ex is OperationCanceledException && !ct.IsCancellationRequested))
-        {
-            _logger.LogError(ex, "Network error calling Oura API at {Url}", url);
-            throw new McpException(
-                "Failed to reach the Oura API. Check your network connection and try again.");
-        }
+        var response = await SendAuthorizedAsync(url, accessToken, ct);
 
         // 401 → re-fetch token (may trigger refresh inside token service) and retry once
         if (response.StatusCode == HttpStatusCode.Unauthorized)
@@ -204,66 +194,10 @@ public class OuraApiClient : IOuraApiClient
                     "Authentication failed after token refresh. Run 'oura-mcp login' to re-authenticate.");
             }
 
-            try
-            {
-                response = await SendAuthorizedAsync(url, accessToken, ct);
-            }
-            catch (Exception ex) when (ex is HttpRequestException || (ex is OperationCanceledException && !ct.IsCancellationRequested))
-            {
-                _logger.LogError(ex, "Network error calling Oura API at {Url} after token refresh", url);
-                throw new McpException(
-                    "Failed to reach the Oura API. Check your network connection and try again.");
-            }
+            response = await SendAuthorizedAsync(url, accessToken, ct);
         }
 
-        // 429 → respect Retry-After header and retry once
-        if (response.StatusCode == (HttpStatusCode)429)
-        {
-            var retryAfter = response.Headers.RetryAfter?.Delta ?? TimeSpan.FromSeconds(1);
-            response.Dispose();
-            await Task.Delay(retryAfter, ct);
-            try
-            {
-                response = await SendAuthorizedAsync(url, accessToken, ct);
-            }
-            catch (Exception ex) when (ex is HttpRequestException || (ex is OperationCanceledException && !ct.IsCancellationRequested))
-            {
-                _logger.LogError(ex, "Rate-limit retry failed for Oura API at {Url}", url);
-                throw new McpException(
-                    "The Oura API is rate-limiting requests and the retry also failed. Try again later.");
-            }
-        }
-
-        // 502/503/504 → transient server error, retry once after a short delay
-        if (response.StatusCode is HttpStatusCode.BadGateway or HttpStatusCode.ServiceUnavailable or HttpStatusCode.GatewayTimeout)
-        {
-            var statusCode = (int)response.StatusCode;
-            _logger.LogError("Oura API returned transient HTTP {StatusCode} for {Url}, retrying once", statusCode, url);
-            response.Dispose();
-            await Task.Delay(TimeSpan.FromSeconds(1), ct);
-            try
-            {
-                response = await SendAuthorizedAsync(url, accessToken, ct);
-            }
-            catch (Exception ex) when (ex is HttpRequestException || (ex is OperationCanceledException && !ct.IsCancellationRequested))
-            {
-                _logger.LogError(ex, "Transient-error retry also failed for Oura API at {Url}", url);
-                throw new McpException(
-                    $"The Oura API is temporarily unavailable (HTTP {statusCode}). Try again later.");
-            }
-
-            if (!response.IsSuccessStatusCode &&
-                response.StatusCode is HttpStatusCode.BadGateway or HttpStatusCode.ServiceUnavailable or HttpStatusCode.GatewayTimeout)
-            {
-                var retryStatusCode = (int)response.StatusCode;
-                response.Dispose();
-                _logger.LogError("Oura API returned HTTP {RetryStatusCode} on transient-error retry for {Url}", retryStatusCode, url);
-                throw new McpException(
-                    $"The Oura API is temporarily unavailable (HTTP {retryStatusCode}). Try again later.");
-            }
-        }
-
-        // 403 → log status and endpoint (no body to avoid leaking user data) and throw a user-friendly MCP error
+        // 403 → subscription or permission issue (not transient — don't retry)
         if (response.StatusCode == HttpStatusCode.Forbidden)
         {
             response.Dispose();
@@ -274,7 +208,8 @@ public class OuraApiClient : IOuraApiClient
                 "Check your subscription status in the Oura app.");
         }
 
-        // Any other non-success status code
+        // Any other non-success status code (transient errors like 429/502/503/504 are retried
+        // by the standard resilience handler on the HttpClient before reaching this point)
         if (!response.IsSuccessStatusCode)
         {
             var statusCode = (int)response.StatusCode;
