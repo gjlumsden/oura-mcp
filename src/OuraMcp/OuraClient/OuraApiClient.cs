@@ -186,7 +186,7 @@ public class OuraApiClient : IOuraApiClient
         {
             _logger.LogError(ex, "Oura API request failed for {Url} after resilience retries", url);
             throw new McpException(
-                "Failed to reach the Oura API. Check your network connection and try again.");
+                "The Oura API request failed after retries were exhausted. Try again later.");
         }
 
         // 401 → re-fetch token (may trigger refresh inside token service) and retry once
@@ -212,7 +212,7 @@ public class OuraApiClient : IOuraApiClient
             {
                 _logger.LogError(ex, "Oura API request failed for {Url} after token refresh", url);
                 throw new McpException(
-                    "Failed to reach the Oura API. Check your network connection and try again.");
+                    "The Oura API request failed after retries were exhausted. Try again later.");
             }
         }
 

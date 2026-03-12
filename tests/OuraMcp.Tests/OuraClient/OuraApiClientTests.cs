@@ -336,7 +336,7 @@ public class OuraApiClientTests
         var act = () => client.GetPersonalInfoAsync();
 
         var ex = await act.Should().ThrowAsync<McpException>();
-        ex.Which.Message.Should().Contain("Failed to reach the Oura API");
+        ex.Which.Message.Should().Contain("failed after retries");
         _logger.Verify(
             x => x.Log(
                 LogLevel.Error,
