@@ -66,7 +66,7 @@ jobs:
         run: dotnet nuget push ./nupkg/*.nupkg --api-key "${{ steps.nuget_login.outputs.NUGET_API_KEY }}" --source https://www.nuget.org/api/v2/package --skip-duplicate
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           files: ./nupkg/*.nupkg
           generate_release_notes: true
