@@ -179,6 +179,15 @@ This server uses an **`az login`-style OAuth authentication** pattern, similar t
 
 OAuth credentials (`OURA_CLIENT_ID`, `OURA_CLIENT_SECRET`) are read from environment variables — never stored in source.
 
+### Headless / CI: `OURA_MCP_DISABLE_BROWSER`
+
+For fully headless environments (CI agents, containers without a display) you can set the `OURA_MCP_DISABLE_BROWSER` environment variable. When set:
+
+- The server skips launching the system browser and skips binding the local OAuth callback listener on `http://localhost:8742/callback/`.
+- The interactive login flow cannot complete in this mode, so the server **fails fast** with a clear error rather than hanging waiting for a callback.
+
+Pair `OURA_MCP_DISABLE_BROWSER` with `--no-login` and provision tokens out-of-band (e.g., copy a `tokens.json` produced on another machine into the token directory). To run the interactive `oura-mcp login` flow, leave `OURA_MCP_DISABLE_BROWSER` unset.
+
 ## Development
 
 To contribute or run from source:

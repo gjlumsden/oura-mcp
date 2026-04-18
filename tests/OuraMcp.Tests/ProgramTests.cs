@@ -176,6 +176,15 @@ public class ProgramTests
                 throw new InvalidOperationException(
                     $"Expected stderr to contain '{expectedSubstring}' but got:\n{stderrBuffer}");
             }
+            catch (OperationCanceledException)
+            {
+                // Timeout while awaiting ReadLineAsync — drain any remaining stderr
+                // and surface a useful diagnostic that includes what we did capture.
+                try { stderrBuffer.Append(await process.StandardError.ReadToEndAsync(CancellationToken.None)); }
+                catch { /* ignore */ }
+                throw new InvalidOperationException(
+                    $"Timed out after {timeoutMs}ms waiting for stderr to contain '{expectedSubstring}'. Captured stderr:\n{stderrBuffer}");
+            }
             finally
             {
                 if (!process.HasExited)
