@@ -82,22 +82,31 @@ builder.Services.AddMcpServer()
     .WithStdioServerTransport()
     .WithToolsFromAssembly();
 
-// Handle CLI login command — build the host to resolve DI services, then run the login flow
+// Local helper that runs the interactive OAuth login flow using DI-resolved services.
+// Used both by the explicit `login` CLI command and by the automatic first-launch flow.
+static async Task RunLoginFlowAsync(IServiceProvider services, CancellationToken ct = default)
+{
+    var options = services.GetRequiredService<IOptions<OuraOAuthOptions>>().Value;
+    var tokenService = services.GetRequiredService<IOuraTokenService>();
+    using var listener = new HttpCallbackListener();
+    var browser = new SystemBrowserLauncher();
+    var loginCommand = new OuraLoginCommand(options, tokenService, listener, browser);
+
+    Console.Error.WriteLine("Opening browser for Oura authorization...");
+    Console.Error.WriteLine($"If the browser doesn't open, visit: {loginCommand.BuildAuthorizeUrl()}");
+    await loginCommand.RunAsync(ct);
+    Console.Error.WriteLine("Login successful! Tokens saved to ~/.oura-mcp/tokens.json");
+}
+
+// Handle explicit CLI login command — build the host to resolve DI services, then run the login flow.
+// This remains available for users who prefer to authenticate ahead of launching the MCP server
+// (e.g., in headless/CI scenarios) but is no longer required: the server also auto-logs-in on first launch.
 if (args.Contains("login"))
 {
     try
     {
         using var host = builder.Build();
-        var options = host.Services.GetRequiredService<IOptions<OuraOAuthOptions>>().Value;
-        var tokenService = host.Services.GetRequiredService<IOuraTokenService>();
-        using var listener = new HttpCallbackListener();
-        var browser = new SystemBrowserLauncher();
-        var loginCommand = new OuraLoginCommand(options, tokenService, listener, browser);
-
-        Console.Error.WriteLine("Opening browser for Oura authorization...");
-        Console.Error.WriteLine($"If the browser doesn't open, visit: {loginCommand.BuildAuthorizeUrl()}");
-        await loginCommand.RunAsync();
-        Console.Error.WriteLine("Login successful! Tokens saved to ~/.oura-mcp/tokens.json");
+        await RunLoginFlowAsync(host.Services);
     }
     catch (Exception ex)
     {
@@ -113,6 +122,33 @@ if (args.Contains("login"))
 try
 {
     using var host = builder.Build();
+
+    // Auto-login on first launch: if no tokens are persisted, run the login flow before starting
+    // the MCP stdio transport so the user is authenticated as part of the main MCP experience.
+    // If tokens exist but are expired, OuraTokenService refreshes them automatically on first use.
+    // Skip auto-login when --no-login is passed (useful for headless scenarios and tests).
+    var skipAutoLogin = args.Contains("--no-login");
+    if (!skipAutoLogin)
+    {
+        var tokenStore = host.Services.GetRequiredService<IOuraTokenStore>();
+        var existingTokens = await tokenStore.LoadAsync();
+        if (existingTokens is null)
+        {
+            Console.Error.WriteLine("No Oura tokens found — starting login flow...");
+            try
+            {
+                await RunLoginFlowAsync(host.Services);
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine($"Error: Login failed. {ex.Message}");
+                if (debugMode) Console.Error.WriteLine(ex.ToString());
+                Console.Error.WriteLine("You can retry by re-launching the server, or run 'oura-mcp login' separately.");
+                return 1;
+            }
+        }
+    }
+
     await host.RunAsync();
 }
 catch (Exception ex)
