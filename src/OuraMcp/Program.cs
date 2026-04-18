@@ -66,7 +66,22 @@ builder.Services.AddHttpClient("OuraApi", c => c.BaseAddress = new Uri("https://
 builder.Services.AddHttpClient("OuraAuth", c => c.BaseAddress = new Uri("https://api.ouraring.com"));
 
 // Services
-builder.Services.AddSingleton<IOuraTokenStore, FileTokenStore>();
+// Allow the token directory to be overridden via OURA_MCP_TOKEN_DIR. This is primarily an
+// affordance for tests and headless scenarios that need an isolated token store without
+// having to override USERPROFILE/HOME (which destabilises the .NET host on Windows by
+// breaking DataProtection key resolution and SpecialFolder lookups).
+var tokenDirOverride = Environment.GetEnvironmentVariable("OURA_MCP_TOKEN_DIR");
+if (!string.IsNullOrWhiteSpace(tokenDirOverride))
+{
+    builder.Services.AddSingleton<IOuraTokenStore>(sp => new FileTokenStore(
+        sp.GetRequiredService<IDataProtectionProvider>(),
+        sp.GetRequiredService<ILogger<FileTokenStore>>(),
+        tokenDirOverride));
+}
+else
+{
+    builder.Services.AddSingleton<IOuraTokenStore, FileTokenStore>();
+}
 builder.Services.AddSingleton<IOuraTokenService, OuraTokenService>();
 
 // Interactive login services. Registered as DI overrides so tests/headless scenarios can swap

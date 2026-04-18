@@ -115,6 +115,13 @@ public class ProgramTests
     /// appears, then kills the process. Used for scenarios where the server would otherwise block
     /// (e.g., waiting for an OAuth callback or reading from stdio).
     /// </summary>
+    // Path to the OuraMcp assembly that is copied next to the test binaries via the project reference.
+    // Running the prebuilt dll directly (rather than `dotnet run`) avoids triggering a NuGet restore
+    // when tests override USERPROFILE/HOME — `dotnet run` resolves NuGet caches under those paths,
+    // so an overridden USERPROFILE turns each invocation into a slow fresh restore.
+    private static readonly string OuraMcpAssemblyPath = Path.Combine(
+        AppContext.BaseDirectory, "OuraMcp.dll");
+
     private static async Task<string> RunUntilStderrContainsAsync(
         string expectedSubstring,
         string arguments = "",
@@ -124,7 +131,7 @@ public class ProgramTests
         var psi = new ProcessStartInfo
         {
             FileName = "dotnet",
-            Arguments = $"run --project \"{ProjectPath}\" -- {arguments}",
+            Arguments = $"exec \"{OuraMcpAssemblyPath}\" {arguments}",
             RedirectStandardError = true,
             RedirectStandardOutput = true,
             UseShellExecute = false,
@@ -139,51 +146,84 @@ public class ProgramTests
                 psi.Environment[key] = value;
         }
 
-        var process = Process.Start(psi)
-            ?? throw new InvalidOperationException(
+        var process = new Process { StartInfo = psi, EnableRaisingEvents = true };
+
+        var stderrBuffer = new System.Text.StringBuilder();
+        var bufferLock = new object();
+        var matchTcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        // Capture stderr via the event-driven API. Process guarantees that all queued
+        // ErrorDataReceived callbacks fire (and the final null sentinel arrives) before
+        // WaitForExitAsync completes, so we cannot lose buffered output from a process
+        // that exits very quickly — unlike polling on process.HasExited + ReadLineAsync.
+        process.ErrorDataReceived += (_, e) =>
+        {
+            if (e.Data is null) return;
+            lock (bufferLock)
+            {
+                stderrBuffer.AppendLine(e.Data);
+            }
+            if (e.Data.Contains(expectedSubstring, StringComparison.Ordinal))
+            {
+                matchTcs.TrySetResult(true);
+            }
+        };
+        // Drain stdout to prevent buffer-fill deadlock; we don't inspect it.
+        process.OutputDataReceived += (_, _) => { };
+
+        if (!process.Start())
+        {
+            throw new InvalidOperationException(
                 $"Failed to start process '{psi.FileName}' with arguments '{psi.Arguments}'.");
+        }
 
         using (process)
         {
-            var stderrBuffer = new System.Text.StringBuilder();
-            using var cts = new CancellationTokenSource(timeoutMs);
+            process.BeginErrorReadLine();
+            process.BeginOutputReadLine();
 
-            // Drain stdout to prevent buffer-fill deadlock
-            _ = Task.Run(async () =>
-            {
-                try { await process.StandardOutput.ReadToEndAsync(cts.Token); }
-                catch { /* ignore — process may be killed */ }
-            });
+            var exitTask = process.WaitForExitAsync();
+            var timeoutTask = Task.Delay(timeoutMs);
 
             try
             {
-                var reader = process.StandardError;
-                while (!cts.IsCancellationRequested && !process.HasExited)
+                var completed = await Task.WhenAny(matchTcs.Task, exitTask, timeoutTask);
+
+                if (completed == matchTcs.Task)
                 {
-                    var line = await reader.ReadLineAsync(cts.Token);
-                    if (line is null) break;
-                    stderrBuffer.AppendLine(line);
-                    if (line.Contains(expectedSubstring, StringComparison.Ordinal))
+                    lock (bufferLock)
                     {
                         return stderrBuffer.ToString();
                     }
                 }
 
-                // If we got here either the process exited or timed out without a match.
-                // Drain any remaining stderr so the assertion message is useful.
-                try { stderrBuffer.Append(await reader.ReadToEndAsync(CancellationToken.None)); }
-                catch { /* ignore */ }
+                if (completed == exitTask)
+                {
+                    // Process exited without printing the substring on a line we saw.
+                    // WaitForExitAsync (with EnableRaisingEvents = true and after BeginErrorReadLine)
+                    // ensures all stderr callbacks have flushed before returning, so the buffer
+                    // is the full captured stderr.
+                    string captured;
+                    lock (bufferLock)
+                    {
+                        captured = stderrBuffer.ToString();
+                    }
+                    if (captured.Contains(expectedSubstring, StringComparison.Ordinal))
+                    {
+                        return captured;
+                    }
+                    throw new InvalidOperationException(
+                        $"Process exited (code {process.ExitCode}) without stderr containing '{expectedSubstring}'. Captured stderr:\n{captured}");
+                }
+
+                // Timed out.
+                string capturedAtTimeout;
+                lock (bufferLock)
+                {
+                    capturedAtTimeout = stderrBuffer.ToString();
+                }
                 throw new InvalidOperationException(
-                    $"Expected stderr to contain '{expectedSubstring}' but got:\n{stderrBuffer}");
-            }
-            catch (OperationCanceledException)
-            {
-                // Timeout while awaiting ReadLineAsync — drain any remaining stderr
-                // and surface a useful diagnostic that includes what we did capture.
-                try { stderrBuffer.Append(await process.StandardError.ReadToEndAsync(CancellationToken.None)); }
-                catch { /* ignore */ }
-                throw new InvalidOperationException(
-                    $"Timed out after {timeoutMs}ms waiting for stderr to contain '{expectedSubstring}'. Captured stderr:\n{stderrBuffer}");
+                    $"Timed out after {timeoutMs}ms waiting for stderr to contain '{expectedSubstring}'. Captured stderr:\n{capturedAtTimeout}");
             }
             finally
             {
@@ -202,7 +242,7 @@ public class ProgramTests
         // Use a throw-away HOME so ~/.oura-mcp/tokens.json does not exist regardless of
         // what the developer machine currently has. FileTokenStore reads from
         // Environment.SpecialFolder.UserProfile, which on Unix is controlled by $HOME.
-        var tempHome = Directory.CreateTempSubdirectory("oura-mcp-auto-login-").FullName;
+        var tempTokenDir = Directory.CreateTempSubdirectory("oura-mcp-auto-login-").FullName;
         try
         {
             var stderr = await RunUntilStderrContainsAsync(
@@ -211,8 +251,10 @@ public class ProgramTests
                 {
                     ["OURA_CLIENT_ID"] = "test-client-id",
                     ["OURA_CLIENT_SECRET"] = "test-client-secret",
-                    ["HOME"] = tempHome,
-                    ["USERPROFILE"] = tempHome,
+                    // Point the token store at an empty isolated directory so the auto-login
+                    // path is exercised. Overriding HOME/USERPROFILE instead would destabilise
+                    // the .NET host on Windows by breaking DataProtection key resolution.
+                    ["OURA_MCP_TOKEN_DIR"] = tempTokenDir,
                     // Suppress real browser launch and HttpListener bind during the test.
                     ["OURA_MCP_DISABLE_BROWSER"] = "1"
                 });
@@ -221,7 +263,7 @@ public class ProgramTests
         }
         finally
         {
-            try { Directory.Delete(tempHome, recursive: true); } catch { /* best effort */ }
+            try { Directory.Delete(tempTokenDir, recursive: true); } catch { /* best effort */ }
         }
     }
 
@@ -231,7 +273,7 @@ public class ProgramTests
         // With --no-login the server must NOT prompt for login, even when no tokens exist.
         // It should proceed straight to starting the stdio MCP transport, which blocks reading
         // stdin — we kill it after a short wait and assert the auto-login message never appeared.
-        var tempHome = Directory.CreateTempSubdirectory("oura-mcp-no-login-").FullName;
+        var tempTokenDir = Directory.CreateTempSubdirectory("oura-mcp-no-login-").FullName;
         try
         {
             var psi = new ProcessStartInfo
@@ -246,8 +288,7 @@ public class ProgramTests
             };
             psi.Environment["OURA_CLIENT_ID"] = "test-client-id";
             psi.Environment["OURA_CLIENT_SECRET"] = "test-client-secret";
-            psi.Environment["HOME"] = tempHome;
-            psi.Environment["USERPROFILE"] = tempHome;
+            psi.Environment["OURA_MCP_TOKEN_DIR"] = tempTokenDir;
 
             var process = Process.Start(psi)
                 ?? throw new InvalidOperationException(
@@ -277,7 +318,7 @@ public class ProgramTests
         }
         finally
         {
-            try { Directory.Delete(tempHome, recursive: true); } catch { /* best effort */ }
+            try { Directory.Delete(tempTokenDir, recursive: true); } catch { /* best effort */ }
         }
     }
 }
