@@ -238,7 +238,9 @@ public class ProgramTests
             psi.Environment["HOME"] = tempHome;
             psi.Environment["USERPROFILE"] = tempHome;
 
-            var process = Process.Start(psi)!;
+            var process = Process.Start(psi)
+                ?? throw new InvalidOperationException(
+                    $"Failed to start process '{psi.FileName}' with arguments '{psi.Arguments}'.");
             using (process)
             {
                 var stderrTask = process.StandardError.ReadToEndAsync();
