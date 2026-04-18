@@ -203,7 +203,9 @@ public class ProgramTests
                     ["OURA_CLIENT_ID"] = "test-client-id",
                     ["OURA_CLIENT_SECRET"] = "test-client-secret",
                     ["HOME"] = tempHome,
-                    ["USERPROFILE"] = tempHome
+                    ["USERPROFILE"] = tempHome,
+                    // Suppress real browser launch and HttpListener bind during the test.
+                    ["OURA_MCP_DISABLE_BROWSER"] = "1"
                 });
 
             stderr.Should().Contain("No Oura tokens found");

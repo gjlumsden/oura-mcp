@@ -68,6 +68,21 @@ builder.Services.AddHttpClient("OuraAuth", c => c.BaseAddress = new Uri("https:/
 // Services
 builder.Services.AddSingleton<IOuraTokenStore, FileTokenStore>();
 builder.Services.AddSingleton<IOuraTokenService, OuraTokenService>();
+
+// Interactive login services. Registered as DI overrides so tests/headless scenarios can swap
+// in no-op implementations. The OURA_MCP_DISABLE_BROWSER env var selects no-op variants that
+// do not open a real browser or bind an HttpListener.
+var disableBrowser = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("OURA_MCP_DISABLE_BROWSER"));
+if (disableBrowser)
+{
+    builder.Services.AddSingleton<IOuraBrowserLauncher, NoOpBrowserLauncher>();
+    builder.Services.AddTransient<IOAuthCallbackListener, NoOpOAuthCallbackListener>();
+}
+else
+{
+    builder.Services.AddSingleton<IOuraBrowserLauncher, SystemBrowserLauncher>();
+    builder.Services.AddTransient<IOAuthCallbackListener>(_ => new HttpCallbackListener());
+}
 builder.Services.AddMemoryCache();
 builder.Services.AddSingleton<CacheSettings>();
 builder.Services.AddScoped<OuraApiClient>();
@@ -84,18 +99,29 @@ builder.Services.AddMcpServer()
 
 // Local helper that runs the interactive OAuth login flow using DI-resolved services.
 // Used both by the explicit `login` CLI command and by the automatic first-launch flow.
+// Resolving IOAuthCallbackListener and IOuraBrowserLauncher from DI allows tests and
+// headless scenarios to swap in no-op implementations (see OURA_MCP_DISABLE_BROWSER).
 static async Task RunLoginFlowAsync(IServiceProvider services, CancellationToken ct = default)
 {
-    var options = services.GetRequiredService<IOptions<OuraOAuthOptions>>().Value;
-    var tokenService = services.GetRequiredService<IOuraTokenService>();
-    using var listener = new HttpCallbackListener();
-    var browser = new SystemBrowserLauncher();
+    using var scope = services.CreateScope();
+    var sp = scope.ServiceProvider;
+    var options = sp.GetRequiredService<IOptions<OuraOAuthOptions>>().Value;
+    var tokenService = sp.GetRequiredService<IOuraTokenService>();
+    var listener = sp.GetRequiredService<IOAuthCallbackListener>();
+    var browser = sp.GetRequiredService<IOuraBrowserLauncher>();
     var loginCommand = new OuraLoginCommand(options, tokenService, listener, browser);
 
-    Console.Error.WriteLine("Opening browser for Oura authorization...");
-    Console.Error.WriteLine($"If the browser doesn't open, visit: {loginCommand.BuildAuthorizeUrl()}");
-    await loginCommand.RunAsync(ct);
-    Console.Error.WriteLine("Login successful! Tokens saved to ~/.oura-mcp/tokens.json");
+    try
+    {
+        Console.Error.WriteLine("Opening browser for Oura authorization...");
+        Console.Error.WriteLine($"If the browser doesn't open, visit: {loginCommand.BuildAuthorizeUrl()}");
+        await loginCommand.RunAsync(ct);
+        Console.Error.WriteLine("Login successful! Tokens saved to ~/.oura-mcp/tokens.json");
+    }
+    finally
+    {
+        (listener as IDisposable)?.Dispose();
+    }
 }
 
 // Handle explicit CLI login command — build the host to resolve DI services, then run the login flow.
