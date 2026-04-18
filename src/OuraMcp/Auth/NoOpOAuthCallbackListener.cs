@@ -16,10 +16,15 @@ public sealed class NoOpOAuthCallbackListener : IOAuthCallbackListener
     public Task<string> WaitForCallbackAsync(CancellationToken ct = default)
     {
         // Block forever (until cancellation) — there is no real callback in this mode.
-        return Task.Delay(Timeout.Infinite, ct).ContinueWith<string>(
-            _ => throw new OperationCanceledException(ct),
-            CancellationToken.None,
-            TaskContinuationOptions.ExecuteSynchronously,
-            TaskScheduler.Default);
+        var tcs = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+        ct.Register(() => tcs.TrySetCanceled(ct));
+
+        return tcs.Task;
+    }
+
+    /// <inheritdoc />
+    public void Dispose()
+    {
+        // No resources to release.
     }
 }

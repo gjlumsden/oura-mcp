@@ -107,21 +107,14 @@ static async Task RunLoginFlowAsync(IServiceProvider services, CancellationToken
     var sp = scope.ServiceProvider;
     var options = sp.GetRequiredService<IOptions<OuraOAuthOptions>>().Value;
     var tokenService = sp.GetRequiredService<IOuraTokenService>();
-    var listener = sp.GetRequiredService<IOAuthCallbackListener>();
+    using var listener = sp.GetRequiredService<IOAuthCallbackListener>();
     var browser = sp.GetRequiredService<IOuraBrowserLauncher>();
     var loginCommand = new OuraLoginCommand(options, tokenService, listener, browser);
 
-    try
-    {
-        Console.Error.WriteLine("Opening browser for Oura authorization...");
-        Console.Error.WriteLine($"If the browser doesn't open, visit: {loginCommand.BuildAuthorizeUrl()}");
-        await loginCommand.RunAsync(ct);
-        Console.Error.WriteLine("Login successful! Tokens saved to ~/.oura-mcp/tokens.json");
-    }
-    finally
-    {
-        (listener as IDisposable)?.Dispose();
-    }
+    Console.Error.WriteLine("Opening browser for Oura authorization...");
+    Console.Error.WriteLine($"If the browser doesn't open, visit: {loginCommand.BuildAuthorizeUrl()}");
+    await loginCommand.RunAsync(ct);
+    Console.Error.WriteLine("Login successful! Tokens saved to ~/.oura-mcp/tokens.json");
 }
 
 // Handle explicit CLI login command — build the host to resolve DI services, then run the login flow.
