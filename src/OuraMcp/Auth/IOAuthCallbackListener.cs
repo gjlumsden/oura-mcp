@@ -2,8 +2,11 @@ namespace OuraMcp.Auth;
 
 /// <summary>
 /// Abstracts the localhost HTTP listener that receives OAuth callbacks.
+/// Implementations may hold OS resources (e.g., a bound port), so the interface
+/// extends <see cref="IDisposable"/> for deterministic cleanup. No-op
+/// implementations may leave <see cref="IDisposable.Dispose"/> empty.
 /// </summary>
-public interface IOAuthCallbackListener
+public interface IOAuthCallbackListener : IDisposable
 {
     /// <summary>The callback URL the listener is bound to.</summary>
     string CallbackUrl { get; }

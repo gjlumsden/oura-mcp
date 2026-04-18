@@ -59,6 +59,9 @@ public sealed class FileTokenStore : IOuraTokenStore
     }
 
     /// <inheritdoc />
+    public string FilePath => _tokenFilePath;
+
+    /// <inheritdoc />
     public async Task<StoredTokenData?> LoadAsync(CancellationToken ct = default)
     {
         await _lock.WaitAsync(ct);

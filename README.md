@@ -12,7 +12,7 @@ A **.NET 10 MCP server** that exposes [Oura Ring](https://ouraring.com/) health 
 
 ## Overview
 
-This server connects to the **Oura API v2** and surfaces ring data — sleep, activity, readiness, heart rate, and more — as MCP tools over **STDIO transport**. Authentication uses an **`az login`-style CLI flow**: run `oura-mcp login` once to authorize with Oura in your browser, and tokens are persisted locally for automatic reuse and refresh.
+This server connects to the **Oura API v2** and surfaces ring data — sleep, activity, readiness, heart rate, and more — as MCP tools over **STDIO transport**. Authentication is **automatic on first launch**: the server opens your browser for Oura authorization the first time it starts, and tokens are persisted locally for silent reuse and refresh. An explicit `oura-mcp login` command is also available for headless or ahead-of-time setup.
 
 ## Getting Started
 
@@ -35,32 +35,9 @@ Or run without installing (requires .NET 10):
 dnx -y gjlumsden.OuraMcp
 ```
 
-### 2. Login
+### 2. Configure Your MCP Client
 
-```powershell
-$env:OURA_CLIENT_ID = "<your-client-id>"
-$env:OURA_CLIENT_SECRET = "<your-client-secret>"
-oura-mcp login
-```
-
-<details>
-<summary><strong>Using the no-install (dnx) option?</strong></summary>
-
-You can login directly via `dnx` without installing the tool globally:
-
-```powershell
-$env:OURA_CLIENT_ID = "<your-client-id>"
-$env:OURA_CLIENT_SECRET = "<your-client-secret>"
-dnx -y gjlumsden.OuraMcp -- login
-```
-
-</details>
-
-Tokens are saved to `~/.oura-mcp/tokens.json`. You only need to do this once — the server refreshes tokens automatically on subsequent runs.
-
-### 3. Configure Your MCP Client
-
-Add the server to your MCP client config. The client launches the server process via STDIO and injects your Oura credentials as environment variables.
+Add the server to your MCP client config. The client launches the server process via STDIO and injects your Oura credentials as environment variables. **The first time the server starts, it will automatically open your browser to authorize with Oura** — no separate login step is required. Tokens are then saved to `~/.oura-mcp/tokens.json` and reused/refreshed on subsequent launches.
 
 **VS Code (GitHub Copilot)** — add to `.vscode/mcp.json` or user settings:
 
@@ -116,7 +93,22 @@ Replace the server entry with:
 
 </details>
 
-### 4. Start Using
+<details>
+<summary><strong>Prefer to log in ahead of time (headless / CI)?</strong></summary>
+
+You can authenticate explicitly before wiring the server into an MCP client by running the `login` subcommand:
+
+```powershell
+$env:OURA_CLIENT_ID = "<your-client-id>"
+$env:OURA_CLIENT_SECRET = "<your-client-secret>"
+oura-mcp login              # or: dnx -y gjlumsden.OuraMcp -- login
+```
+
+Tokens are saved to `~/.oura-mcp/tokens.json`; subsequent server launches will skip the browser prompt. You can also pass `--no-login` to `oura-mcp` to suppress the auto-login prompt on startup (useful if tokens are provisioned out-of-band).
+
+</details>
+
+### 3. Start Using
 
 Once configured, your MCP client will discover the Oura tools automatically. Try prompts like:
 
@@ -177,14 +169,24 @@ Most date-range tools accept optional `startDate` and `endDate` parameters (form
 
 ## Authentication Flow
 
-This server uses an **`az login`-style CLI authentication** pattern, similar to the [Azure MCP Server](https://github.com/Azure/azure-mcp):
+This server uses an **`az login`-style OAuth authentication** pattern, similar to the [Azure MCP Server](https://github.com/Azure/azure-mcp), integrated into the main MCP experience:
 
-1. **One-time login:** Run `oura-mcp login` (or `dnx -y gjlumsden.OuraMcp -- login` for the no-install option, or `dotnet run --project src/OuraMcp -- login` from source) to open your browser to the Oura OAuth consent screen.
-2. **Token exchange:** After you authorize, a local callback server on `http://localhost:8742/callback/` receives the authorization code and exchanges it for access/refresh tokens.
-3. **Persistent storage:** Tokens are saved to `~/.oura-mcp/tokens.json` (file permissions restricted to owner on Unix).
-4. **Automatic refresh:** On startup the server loads saved tokens and refreshes them automatically when expired.
+1. **Automatic first launch:** When the server starts and no tokens are present, it opens your browser to the Oura OAuth consent screen as part of its normal startup — no separate command is required. Pass `--no-login` to suppress this behavior if you provision tokens out-of-band.
+2. **Explicit login (optional):** You can still run `oura-mcp login` (or `dnx -y gjlumsden.OuraMcp -- login` for the no-install option, or `dotnet run --project src/OuraMcp -- login` from source) to authenticate ahead of time (e.g., headless setup, CI).
+3. **Token exchange:** After you authorize, a local callback server on `http://localhost:8742/callback/` receives the authorization code and exchanges it for access/refresh tokens.
+4. **Persistent storage:** Tokens are saved to `~/.oura-mcp/tokens.json` (file permissions restricted to owner on Unix).
+5. **Automatic refresh:** On subsequent startups the server loads saved tokens and refreshes them automatically when expired.
 
 OAuth credentials (`OURA_CLIENT_ID`, `OURA_CLIENT_SECRET`) are read from environment variables — never stored in source.
+
+### Headless / CI: `OURA_MCP_DISABLE_BROWSER`
+
+For fully headless environments (CI agents, containers without a display) you can set the `OURA_MCP_DISABLE_BROWSER` environment variable. When set:
+
+- The server skips launching the system browser and skips binding the local OAuth callback listener on `http://localhost:8742/callback/`.
+- The interactive login flow cannot complete in this mode, so the server **fails fast** with a clear error rather than hanging waiting for a callback.
+
+Pair `OURA_MCP_DISABLE_BROWSER` with `--no-login` and provision tokens out-of-band (e.g., copy a `tokens.json` produced on another machine into the token directory). To run the interactive `oura-mcp login` flow, leave `OURA_MCP_DISABLE_BROWSER` unset.
 
 ## Development
 
@@ -198,13 +200,15 @@ dotnet test
 ```
 
 ```powershell
-# First-time setup: authenticate with Oura
+# Set OAuth credentials
 $env:OURA_CLIENT_ID = "<your-client-id>"
 $env:OURA_CLIENT_SECRET = "<your-client-secret>"
-dotnet run --project src/OuraMcp -- login
 
-# Run the MCP server locally (STDIO)
+# Run the MCP server locally (STDIO) — opens the browser automatically on first launch
 dotnet run --project src/OuraMcp
+
+# Or authenticate explicitly first (optional; useful for headless scenarios)
+dotnet run --project src/OuraMcp -- login
 ```
 
 ## Caching

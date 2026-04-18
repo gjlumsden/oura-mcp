@@ -3,6 +3,9 @@ namespace OuraMcp.Auth;
 /// <summary>Persists Oura OAuth tokens to disk.</summary>
 public interface IOuraTokenStore
 {
+    /// <summary>The absolute path to the file where tokens are persisted.</summary>
+    string FilePath { get; }
+
     /// <summary>Load stored tokens, or <c>null</c> if none exist.</summary>
     Task<StoredTokenData?> LoadAsync(CancellationToken ct = default);
 
