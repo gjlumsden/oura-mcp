@@ -103,11 +103,24 @@ builder.Services.AddMcpServer()
 // headless scenarios to swap in no-op implementations (see OURA_MCP_DISABLE_BROWSER).
 static async Task RunLoginFlowAsync(IServiceProvider services, CancellationToken ct = default)
 {
+    // The interactive flow requires a real browser + HttpListener. When OURA_MCP_DISABLE_BROWSER
+    // is set the no-op listener never completes, so fail fast with a clear, actionable message
+    // instead of hanging forever waiting for a callback that will never arrive.
+    if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("OURA_MCP_DISABLE_BROWSER")))
+    {
+        throw new InvalidOperationException(
+            "OURA_MCP_DISABLE_BROWSER is set, so the interactive login flow cannot run. " +
+            "Provision tokens out-of-band and re-run with --no-login, " +
+            "or unset OURA_MCP_DISABLE_BROWSER and run 'oura-mcp login'.");
+    }
+
+    // The DI scope owns the lifetime of the resolved listener — do NOT also wrap it in `using`,
+    // which would risk double-disposing implementations that aren't idempotent.
     using var scope = services.CreateScope();
     var sp = scope.ServiceProvider;
     var options = sp.GetRequiredService<IOptions<OuraOAuthOptions>>().Value;
     var tokenService = sp.GetRequiredService<IOuraTokenService>();
-    using var listener = sp.GetRequiredService<IOAuthCallbackListener>();
+    var listener = sp.GetRequiredService<IOAuthCallbackListener>();
     var browser = sp.GetRequiredService<IOuraBrowserLauncher>();
     var loginCommand = new OuraLoginCommand(options, tokenService, listener, browser);
 
